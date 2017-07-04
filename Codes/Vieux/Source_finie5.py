@@ -4,10 +4,11 @@ Now we consider that the star, not along the line of sight, is a sphere of unifo
 Our coordinate are theta, angle formed by the ray from the star and the direction of the centre from a position on the line of sight and phi, polar angle around this axis.
 
 Parameters that we can give for this code are:
-    L      : distance to the gamma-source (au)
-    zb     : position along the line of sight nearly the star (au)
-    b      : impact parameter (au)
-    R      : radius of the star (au)
+    L      : distance to the gamma-source (kpc)
+    D_star : distance to the star (kpc)
+    z_b    : position along the line of sight nearly the star (kpc)
+    b      : impact parameter (kpc)
+    R      : radius of the star (m)
     T      : temperature of the star (K)
 """
 
@@ -26,7 +27,7 @@ def density_n(eps, T, theta):
 
     Parameters:
         eps   : energy of the target-photon (keV)
-        theta : angle formed by the ray (from the star) and the line connecting the centre of the star and a position z on the line of sight (rad)
+        theta : angle formed by the ray (from the star) and the straight line connecting the centre of the star and a position z on the line of sight (rad)
         T     : temperature of the star (K)
     """
 
@@ -123,10 +124,10 @@ def integration_log(x, y):
 
     return integral
 
-def f(theta, phi, eps, z, L, b, R, E, T, zb):
+def f(theta, phi, eps, z, L, D_star, b, R, E, T, zb):
 
     """
-    Return the function for the integration in phi : f = dn * sigma * (1 - cos(alpha)) * sin(theta)
+    Return the function for the integration in theta : f = dn * sigma * (1 - cos(alpha))
         where dn is the density of photons, sigma is the dimensionless cross section of the interaction,
               alpha is the between the two momenta of the two photons in the observer's frame
 
@@ -146,7 +147,7 @@ def f(theta, phi, eps, z, L, b, R, E, T, zb):
     #Global constants
     mc2 = 510.9989461 #electron mass (keV)
 
-    D = distance(zb, z, b)
+    D = distance(L, D_star, z)
 
     cos_alpha = angle_alpha(b, D, z, zb, theta, phi)
     epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/mc2 # epsc in keV/mc2
@@ -171,25 +172,24 @@ def f(theta, phi, eps, z, L, b, R, E, T, zb):
     dn = density_n(eps, T, theta)
     sigma = cross_section(epsc)
 
-    return dn * sigma * (1 - cos_alpha) * np.sin(theta)
+    return dn * sigma * (1 - cos_alpha)
 
 def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
 
     #Global constants
     r0 =  2.818e-13 #classical electron radius (cm)
-    k = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
 
     integral = np.zeros_like(E)
 
-    for i in range(len(E)): # integration over z
+    for i in range(len(E)):
 
         integral_eps = np.zeros_like(z)
 
-        # Energy of the target-photon
+        #energy of the target-photon
         epsmin = mc2**2/E[i]
         epsmax = 10*k*T
 
-        # Because epsmin must be lower than epsmax
+        #Because epsmin must be lower than epsmax
         if epsmin > epsmax:
             continue
         else:
@@ -197,57 +197,60 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
             print(i)
             print(len(eps))
 
-        for j in range (len(z)): # integration over eps
+        for j in range (len(z)):
 
             integral_theta = np.zeros_like(eps)
-            D = distance(zb, z[j], b)
+            D = distance(L, D_star, z[j])
             theta_max = np.arcsin(R/D)
             theta = np.linspace(0, theta_max, 10)
 
-            for l in range (len(eps)): # integration over theta
+            for k in range (len(eps)):
 
                 integral_phi = np.zeros_like(theta)
 
-                for m in range (len(theta)): # integration over phi
+                for l in range (len(theta)):
 
-                    integrand = f(theta[m], phi, eps[l], z[j], L, b, R, E[i], T, zb)
+                    integrand = f(theta[l], phi, eps[k], z[j], L, D_star, b, R, E[i], T, zb)
                     integrand = np.nan_to_num(integrand)
 
                     idx=(integrand > 0.0)
 
-                    # Because the function integral_log works only if there is more than two elements not zero
+                    #Because the function integral_log works only if there is more than two elements not zero
                     if sum(idx) > 2:
-                        integral_phi[m] = integration_log(phi[idx], integrand[idx])
+                        integral_phi[l] = integration_log(phi[idx], integrand[idx])
 
-                # Because the function integral_log works only if there is more than two elements not zero
+                #Because the function integral_log works only if there is more than two elements not zero
                 idx=(integral_phi > 0.0)
                 if sum(idx) > 2:
-                    integral_theta[l] = integration_log(theta[idx], integral_phi[idx])
+                    integral_theta[k] = integration_log(theta[idx], integral_phi[idx])
 
-            # Because the function integral_log works only if there is more than two elements not zero
+            #Because the function integral_log works only if there is more than two elements not zero
             idx=(integral_theta > 0.0)
             if sum(idx) > 2:
                 integral_eps[j] = integration_log(eps[idx], integral_theta[idx]) #you get d(tau)/dx
 
-        # Because the function integral_log works only if there is more than two elements not zero
+        plt.figure(1)
+        plt.plot(z, integral_eps, label = "b = %.2f au" %b_au)
+
+        #Because the function integral_log works only if there is more than two elements not zero
         idx=(integral_eps > 0.0)
         if sum(idx) > 2:
             integral[i] = integration_log(z[idx], integral_eps[idx])
 
     return  1/2.0 * np.pi * r0**2 * integral
 
-# Global constants
-conv_l = 1.45979e13      # Conversion factor from au to cm
-conv_en = 1.602e-16      # Conversion factor from J to keV
-c = 2.99792458e+10       # Light speed in cm/s
+#Global constants
+conv_l = 1.45979e13      # conversion factor from kpc to cm
+conv_en = 1.602e-16      # conversion factor from J to keV
+c = 2.99792458e+10       # light speed in cm/s
 k = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
-mc2 = 510.9989461        # Electron mass (keV)
+mc2 = 510.9989461        # electron mass (keV)
 
-# For the vector eps and E
-number_bin_E = 40
+#For the vector eps, E
+number_bin_E = 80
 number_bin_eps = 40.0
 
-# Parameters for the code
+#Parameters for the code
 L = 20 * conv_l                         # the distance to the gamma-source (cm)
 zb = 10 * conv_l                        # position along the line of sight nearly the star (cm)
 b = 5 * conv_l                          # impact parameter (cm)
@@ -258,21 +261,25 @@ T = 10000                               # temperature of the star (K)
 z = np.linspace(0, L, 100)              # position along the line of sight (cm)
 phi = np.linspace(0, 2*np.pi, 10)       # angle polar
 
-# Energy of the gamma-photon
-Emin = 1e7       # Emin = 1e-2 TeV (keV)
-Emax = 1e14      # Emax = 1e5 TeV (keV)
+#energy of the gamma-photon
+Emin = 1e7       # Emin = 10^-1 TeV (keV)
+Emax = 1e14      # Emax = 10^5 TeV (keV)
 E = np.logspace(log10(Emin), log10(Emax), number_bin_E)  # keV
 E_tev = E*1e-9   # TeV
 
-
-# Calulation of the transmittance
 tau = calculate_tau(E, z, phi, zb, L, D_star, b, R, T)
 
 D_star_au = D_star/conv_l # in au
 b_au = b/conv_l # in au
 L_au = L/conv_l # in au
-
+plt.figure(2)
 plt.plot(E_tev, np.exp(-tau), label = "b = %.2f au" %b_au)
+
+plt.figure(1)
+plt.xlabel('z (ua)')
+plt.ylabel(r'\frac{\tau_{\gamma \gamma}}{d z}' ' (cm$^{-1}$)')
+
+plt.figure(2)
 plt.xscale('log')
 plt.xlabel(r'$E_\gamma$' '(TeV)')
 plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')

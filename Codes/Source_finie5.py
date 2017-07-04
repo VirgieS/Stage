@@ -204,25 +204,25 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
             theta_max = np.arcsin(R/D)
             theta = np.linspace(0, theta_max, 10)
 
-            for l in range (len(eps)): # integration over theta
+            for k in range (len(eps)): # integration over theta
 
                 integral_phi = np.zeros_like(theta)
 
-                for m in range (len(theta)): # integration over phi
+                for l in range (len(theta)): # integration over phi
 
-                    integrand = f(theta[m], phi, eps[l], z[j], L, b, R, E[i], T, zb)
+                    integrand = f(theta[l], phi, eps[k], z[j], L, b, R, E[i], T, zb)
                     integrand = np.nan_to_num(integrand)
 
                     idx=(integrand > 0.0)
 
                     # Because the function integral_log works only if there is more than two elements not zero
                     if sum(idx) > 2:
-                        integral_phi[m] = integration_log(phi[idx], integrand[idx])
+                        integral_phi[l] = integration_log(phi[idx], integrand[idx])
 
                 # Because the function integral_log works only if there is more than two elements not zero
                 idx=(integral_phi > 0.0)
                 if sum(idx) > 2:
-                    integral_theta[l] = integration_log(theta[idx], integral_phi[idx])
+                    integral_theta[k] = integration_log(theta[idx], integral_phi[idx])
 
             # Because the function integral_log works only if there is more than two elements not zero
             idx=(integral_theta > 0.0)
@@ -233,6 +233,10 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
         idx=(integral_eps > 0.0)
         if sum(idx) > 2:
             integral[i] = integration_log(z[idx], integral_eps[idx])
+            if i == len(E)/2:
+                plt.figure(1)
+                z_au = z/conv_l
+                plt.plot(z_au, integral_eps)
 
     return  1/2.0 * np.pi * r0**2 * integral
 
@@ -244,7 +248,7 @@ k = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
 mc2 = 510.9989461        # Electron mass (keV)
 
 # For the vector eps and E
-number_bin_E = 40
+number_bin_E = 80
 number_bin_eps = 40.0
 
 # Parameters for the code
@@ -259,8 +263,8 @@ z = np.linspace(0, L, 100)              # position along the line of sight (cm)
 phi = np.linspace(0, 2*np.pi, 10)       # angle polar
 
 # Energy of the gamma-photon
-Emin = 1e7       # Emin = 1e-2 TeV (keV)
-Emax = 1e14      # Emax = 1e5 TeV (keV)
+Emin = 1e7       # Emin = 10^-1 TeV (keV)
+Emax = 1e14      # Emax = 10^5 TeV (keV)
 E = np.logspace(log10(Emin), log10(Emax), number_bin_E)  # keV
 E_tev = E*1e-9   # TeV
 
@@ -271,7 +275,7 @@ tau = calculate_tau(E, z, phi, zb, L, D_star, b, R, T)
 D_star_au = D_star/conv_l # in au
 b_au = b/conv_l # in au
 L_au = L/conv_l # in au
-
+plt.figure(2)
 plt.plot(E_tev, np.exp(-tau), label = "b = %.2f au" %b_au)
 plt.xscale('log')
 plt.xlabel(r'$E_\gamma$' '(TeV)')
@@ -279,4 +283,8 @@ plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
 plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with IR photons of a ponctual source at %.2f K' %T)
 plt.text(100, 1,'D$_{star}$ = %.2f au, L = %.2f au' %(D_star_au, L_au))
 plt.legend()
+
+plt.figure(1)
+plt.xlabel('z (au)')
+plt.ylabel(r'$\frac{d tau_{\gamma \gamma}}{d z}$ (cm^-1)')
 plt.show()

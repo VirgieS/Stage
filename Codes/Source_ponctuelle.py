@@ -167,7 +167,6 @@ def calculate_tau(E, u_in, b, d, T, z, zb):
             continue
         else:
             eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
-            #nu = h/eps
 
         for j in range(len(z)):
 
@@ -226,6 +225,7 @@ for k in range (len(R)):
 
     tau = calculate_tau(E, u_in, b, d, T, z, zb)
     R_kpc = R[k]/3.085678e21 #in kpc
+
     plt.plot(E_tev, np.exp(-tau), label = "R = %.2f kpc" %R_kpc)
 
 Rs_kpc = Rs/3.085678e21 #in kpc
@@ -235,6 +235,6 @@ plt.xscale('log')
 plt.xlabel(r'$E_\gamma$' '(TeV)')
 plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
 plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with IR photons of a ponctual source at %.2f K' %T)
-#plt.text(100, 1,'Rs = %.2f kpc, L = %.2f kpc' %(Rs_kpc, L_kpc))
+plt.text(100, 1,'Rs = %.2f kpc, L = %.2f kpc' %(Rs_kpc, L_kpc))
 plt.legend()
 plt.show()
