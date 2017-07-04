@@ -39,10 +39,10 @@ def density_n(eps, T, theta):
     def planck(nu, T):
 
         #Global constants
-        k = 1.380658e-23/conv_en #Boltzmann's constant in keV/K
+        kb = 1.380658e-23/conv_en #Boltzmann's constant in keV/K
         c = 2.99792458e+10 #light speed in cm/s
 
-        return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(k*T)) - 1)
+        return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(kb*T)) - 1)
 
     Bnu = planck(nu, T)
 
@@ -177,7 +177,7 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
 
     #Global constants
     r0 =  2.818e-13 #classical electron radius (cm)
-    k = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
+    kb = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
 
     integral = np.zeros_like(E)
 
@@ -187,13 +187,15 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
 
         # Energy of the target-photon
         epsmin = mc2**2/E[i]
-        epsmax = 10*k*T
+        epsmax = 10*kb*T
 
         # Because epsmin must be lower than epsmax
         if epsmin > epsmax:
             continue
         else:
             eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+            print(i)
+            print(len(eps))
 
         for j in range (len(z)): # integration over eps
 
@@ -238,7 +240,7 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
 conv_l = 1.45979e13      # Conversion factor from au to cm
 conv_en = 1.602e-16      # Conversion factor from J to keV
 c = 2.99792458e+10       # Light speed in cm/s
-k = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
+kb = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
 mc2 = 510.9989461        # Electron mass (keV)
 
 # For the vector eps and E
@@ -252,7 +254,7 @@ b = 5 * conv_l                          # impact parameter (cm)
 D_star =  np.sqrt(b**2 + (L - zb)**2)   # distance to the star (from us) (cm)
 D_gamma = np.sqrt(b**2 + L**2)          # distance between the star and the gamma-source (cm)
 R = 0.5 * conv_l                        # radius of the star (express in Rsun)
-T = np.array([3000, 6000, 10000])       # temperature of the star (K)
+T = 10000                               # temperature of the star (K)
 z = np.linspace(0, L, 100)              # position along the line of sight (cm)
 phi = np.linspace(0, 2*np.pi, 10)       # angle polar
 
@@ -264,20 +266,20 @@ E_tev = E*1e-9   # TeV
 
 
 # Calculation of the transmittance
-for i in range (len(T)):
-    print(i)
-    tau = calculate_tau(E, z, phi, zb, L, D_star, b, R, T[i])
-    plt.plot(E_tev, np.exp(-tau), label = "T = %.2f K" %T[i])
+tau = calculate_tau(E, z, phi, zb, L, D_star, b, R, T)
+
+b_au = b/conv_l # in au
+plt.plot(E_tev, np.exp(-tau), label = "b = %.2f au" %b_au)
 
 D_star_au = D_star/conv_l # in au
-b_au = b/conv_l # in au
 L_au = L/conv_l # in au
 R_au = R/conv_l #in au
+
 
 plt.xscale('log')
 plt.xlabel(r'$E_\gamma$' '(TeV)')
 plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
-plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with a star with a radius %.2f au' %(R_au))
-plt.text(100, 1,'D$_{star}$ = %.2f au, L = %.2f au, b = %.2f au' %(D_star_au, L_au, b_au))
+plt.title(u'Transmittance of 'r'$\gamma$' '-rays in interaction \n with a star at %.2f K and a radius %.2f au' %(T, R_au))
+#plt.text(100, 1,'D$_{star}$ = %.2f au, L = %.2f au' %(D_star_au, L_au))
 plt.legend()
 plt.show()

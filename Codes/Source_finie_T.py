@@ -39,10 +39,10 @@ def density_n(eps, T, theta):
     def planck(nu, T):
 
         #Global constants
-        k = 1.380658e-23/conv_en #Boltzmann's constant in keV/K
+        kb =1.380658e-23/conv_en #Boltzmann's constant in keV/K
         c = 2.99792458e+10 #light speed in cm/s
 
-        return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(k*T)) - 1)
+        return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(kb*T)) - 1)
 
     Bnu = planck(nu, T)
 
@@ -177,7 +177,7 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
 
     #Global constants
     r0 =  2.818e-13 #classical electron radius (cm)
-    k = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
+    kb =1.380658e-23/conv_en # Boltzmann's constant in keV/K
 
     integral = np.zeros_like(E)
 
@@ -187,7 +187,7 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
 
         # Energy of the target-photon
         epsmin = mc2**2/E[i]
-        epsmax = 10*k*T
+        epsmax = 10*kb*T
 
         # Because epsmin must be lower than epsmax
         if epsmin > epsmax:
@@ -238,7 +238,7 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
 conv_l = 1.45979e13      # Conversion factor from au to cm
 conv_en = 1.602e-16      # Conversion factor from J to keV
 c = 2.99792458e+10       # Light speed in cm/s
-k = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
+kb =1.380658e-23/conv_en # Boltzmann's constant in keV/K
 mc2 = 510.9989461        # Electron mass (keV)
 
 # For the vector eps and E
@@ -269,10 +269,10 @@ for i in range (len(T)):
     tau = calculate_tau(E, z, phi, zb, L, D_star, b, R, T[i])
     plt.plot(E_tev, np.exp(-tau), label = "T = %.2f K" %T[i])
 
-D_star_au = D_star/conv_l # in au
-b_au = b/conv_l # in au
-L_au = L/conv_l # in au
-R_au = R/conv_l #in au
+D_star_au = D_star/conv_l   # in au
+b_au = b/conv_l             # in au
+L_au = L/conv_l             # in au
+R_au = R/conv_l             # in au
 
 plt.xscale('log')
 plt.xlabel(r'$E_\gamma$' '(TeV)')

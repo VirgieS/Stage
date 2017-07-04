@@ -247,6 +247,7 @@ E_tev = E*1e-9 #TeV
 tau = calculate_tau(E, u_in, b, T, z, zb)
 b_au = b/conv_l # in au
 D_star_au = D_star/conv_l # in au
+R_au = R/conv_l #in au
 
 plt.plot(E_tev, np.exp(-tau), label = "b = %.2f kpc" %b_au)
 
@@ -256,7 +257,7 @@ L_au = L/conv_l # in au
 plt.xscale('log')
 plt.xlabel(r'$E_\gamma$' '(TeV)')
 plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
-plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with IR photons of a ponctual source at %.2f K' %T)
+plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with a star at %.2f K and a radius %.2f au' %(T, R_au))
 plt.text(100, 1,'D$_{star}$ = %.2f kpc, L = %.2f kpc' %(D_star_au, L_au))
 plt.legend()
 plt.show()

@@ -166,7 +166,7 @@ def calculate_tau(E, u_in, b, d, T, z, zb):
         if epsmin > epsmax:
             continue
         else:
-            eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+            eps = u8
 
         for j in range(len(z)):
 
@@ -192,7 +192,6 @@ k = 1.380658e-23/1.602e-16 #Boltzmann's constant in keV/K
 h = 6.6260755e-34/1.602e-16 #Planck's constant in keV*s
 c = 2.99792458e+10 #light speed in cm/s
 mc2 = 510.9989461 #electron mass (keV)
-
 
 #For the vector eps, E
 number_bin_E = 80
