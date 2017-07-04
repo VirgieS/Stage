@@ -8,6 +8,7 @@ Parameters that we can give for this code are:
     zb    : position along the line of sight nearly the star (au)
     b      : impact parameter (au)
     T      : temperature of the star (K)
+    A TESTER
 """
 
 #librairies
