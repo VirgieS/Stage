@@ -235,15 +235,15 @@ L = 20 * conv_l                         # the distance to the gamma-source (cm)
 zb = np.array([5, 10, 15]) * conv_l     # position along the line of sight nearly the star (cm)
 b = 5 * conv_l                          # impact parameter (cm)
 D_star =  np.sqrt(b**2 + (L - zb)**2)   # distance to the star (from us) (cm)
-D_gamma = np.sqrt(b**2 + L**2)          # distance between the star and the gamma-source (cm)
+D_gamma = np.sqrt(b**2 + zb**2)          # distance between the star and the gamma-source (cm)
 R = 0.5 * conv_l                        # radius of the star (express in Rsun)
-T = 10000                               # temperature of the star (K)
+T = 3000                               # temperature of the star (K)
 z = np.linspace(0, L, 100)              # position along the line of sight (cm)
 phi = np.linspace(0, 2*np.pi, 10)       # angle polar
 
 # Energy of the gamma-photon
 E = 1e9  # keV
-E_gev = E*1e-9   # TeV
+E_tev = E*1e-9   # TeV
 
 b_au = b/conv_l # in au
 z_au = z/conv_l # in au
@@ -252,7 +252,7 @@ z_au = z/conv_l # in au
 for i in range (len(zb)):
     tau = calculate_tau(E, z, phi, zb[i], L, D_star, b, R, T)
     zb_au = zb[i]/conv_l #in au
-    plt.plot(z_au, tau, label = "b = %.2f au and zb = %.2f au" %(b_au, zb_au))
+    plt.plot(z_au, tau, label = "zb = %.2f au" %(zb_au))
 
 D_star_au = D_star/conv_l # in au
 L_au = L/conv_l # in au
@@ -261,6 +261,6 @@ R_au = R/conv_l #in au
 plt.xlabel(r'z (au)')
 plt.ylabel(r'$\frac{d \tau_{\gamma \gamma}}{d z}$' ' ' r'$(cm^{-1})$' )
 #plt.title(u'Optical depth for the interaction between 'r'$\gamma$' '-rays at %.2f GeV \n and photons of a star at %.2f K and a radius %.2f au' %(E_gev, T, R_au))
-#plt.text(100, 1,'D$_{star}$ = %.2f au, L = %.2f au' %(D_star_au, L_au))
-plt.legend()
+plt.text(0, 0, u'L = %.2f au, T = %.2f K \nb = %.2f au, E$_\gamma$ = %.2f TeV' %(L_au, T, b_au, E_tev))
+plt.legend(loc='upper right')
 plt.show()
