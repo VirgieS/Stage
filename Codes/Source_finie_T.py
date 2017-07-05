@@ -194,6 +194,8 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
             continue
         else:
             eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+            print(i)
+            print(len(eps))
 
         for j in range (len(z)): # integration over eps
 
@@ -252,7 +254,7 @@ b = 5 * conv_l                          # impact parameter (cm)
 D_star =  np.sqrt(b**2 + (L - zb)**2)   # distance to the star (from us) (cm)
 D_gamma = np.sqrt(b**2 + L**2)          # distance between the star and the gamma-source (cm)
 R = 0.5 * conv_l                        # radius of the star (express in Rsun)
-T = np.array([3000, 6000, 10000])       # temperature of the star (K)
+T = np.array([3000, 6000, 10000])             # temperature of the star (K)
 z = np.linspace(0, L, 100)              # position along the line of sight (cm)
 phi = np.linspace(0, 2*np.pi, 10)       # angle polar
 
@@ -265,7 +267,6 @@ E_tev = E*1e-9   # TeV
 
 # Calculation of the transmittance
 for i in range (len(T)):
-    print(i)
     tau = calculate_tau(E, z, phi, zb, L, D_star, b, R, T[i])
     plt.plot(E_tev, np.exp(-tau), label = "T = %.2f K" %T[i])
 
@@ -278,6 +279,6 @@ plt.xscale('log')
 plt.xlabel(r'$E_\gamma$' '(TeV)')
 plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
 plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with a star with a radius %.2f au' %(R_au))
-plt.text(100, 1,'D$_{star}$ = %.2f au, L = %.2f au, b = %.2f au' %(D_star_au, L_au, b_au))
+#plt.text(100, 1,'D$_{star}$ = %.2f au, L = %.2f au, b = %.2f au' %(D_star_au, L_au, b_au))
 plt.legend()
 plt.show()
