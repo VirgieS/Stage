@@ -277,6 +277,7 @@ R_au = R/conv_l #in au
 
 
 plt.xscale('log')
+plt.yscale('log')
 plt.xlabel(r'$E_\gamma$' '(TeV)')
 plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
 plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with a star at %.2f K and a radius %.2f au' %(T, R_au))

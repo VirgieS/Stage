@@ -254,7 +254,7 @@ b = 5 * conv_l                          # impact parameter (cm)
 D_star =  np.sqrt(b**2 + (L - zb)**2)   # distance to the star (from us) (cm)
 D_gamma = np.sqrt(b**2 + L**2)          # distance between the star and the gamma-source (cm)
 R = 0.5 * conv_l                        # radius of the star (express in Rsun)
-T = 3000                                # temperature of the star (K)
+T = 10000                               # temperature of the star (K)
 z = np.linspace(0, L, 100)              # position along the line of sight (cm)
 phi = np.linspace(0, 2*np.pi, 10)       # angle polar
 
