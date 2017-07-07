@@ -19,107 +19,6 @@ from scipy.integrate import quad
 
 #Important functions for the calculation
 
-def density_n_cst(eps, T, theta):
-
-    """
-    Density of the photons is not isotropic : dn = Bnu * cos(theta)/(c * h**2 *nu)
-
-    Parameters:
-        eps   : energy of the target-photon (keV)
-        theta : angle formed by the ray (from the star) and the line connecting the centre of the star and a position z on the line of sight (rad)
-        T     : temperature of the star (K)
-    """
-
-    #Global constants
-    h = 6.6260755e-34/conv_en #Planck's constant in keV*s
-    c = 2.99792458e+10 #light speed in cm/s
-
-    nu = eps/h
-
-    def planck(nu, T):
-
-        #Global constants
-        kb = 1.380658e-23/conv_en #Boltzmann's constant in keV/K
-        c = 2.99792458e+10 #light speed in cm/s
-
-        return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(kb*T)) - 1)
-
-    Bnu = planck(nu, T)
-
-    return Bnu/(c * h**2 * nu) #return dn in cm^3/sr/keV
-
-def density_n(eps, T, theta):
-
-    """
-    Density of the photons is not isotropic : dn = Bnu * cos(theta)/(c * h**2 *nu)
-
-    Parameters:
-        eps   : energy of the target-photon (keV)
-        theta : angle formed by the ray (from the star) and the line connecting the centre of the star and a position z on the line of sight (rad)
-        T     : temperature of the star (K)
-    """
-
-    #Global constants
-    h = 6.6260755e-34/conv_en #Planck's constant in keV*s
-    c = 2.99792458e+10 #light speed in cm/s
-
-    nu = eps/h
-
-    def planck(nu, T):
-
-        #Global constants
-        kb = 1.380658e-23/conv_en #Boltzmann's constant in keV/K
-        c = 2.99792458e+10 #light speed in cm/s
-
-        return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(kb*T)) - 1)
-
-    Bnu = planck(nu, T)
-
-    return Bnu/(c * h**2 * nu) * np.cos(theta) #return dn in cm^3/sr/keV
-
-def distance(zb, z, b):
-
-    """
-    Return for each position z along the line of sight the distance between this position and the centre of the star (cm)
-
-    Parameters:
-        zb       : position on the line of sight closely the star (cm)
-        z        : position along the line of sight (cm)
-        b        : impact parameter
-    """
-
-    return np.sqrt((zb - z)**2 + b**2)
-
-def angle_alpha(b, D, z, zb, theta, phi):
-
-    """
-    Return the cosinus of the angle (alpha) between the two momenta of the two photons in the observer's frame
-
-    Parameters :
-        b     : impact parameter (cm)
-        D     : distance to the star from each position along the line of sight (cm)
-        z     : position along the line of sight (cm)
-        zb    : position along the line of sight nearly the star (cm)
-        theta : angle formed by the ray (from the star) and the straight line connecting the centre of the star and a position z on the line of sight (rad)
-            careful theta = 0 when the ray 'comes' from the centre of the star and theta = theta_max when the ray is tangent to the sphere
-        phi   : angle around the direction between the centre of the star and the position along the line of sight (rad)
-    """
-
-    #Angle formed by the direction between the centre of the star and the position along the line of sight, and the line of sight (rad)
-    def angle_beta(b, D, z, zb):
-
-        if z <= zb:
-            beta = np.arcsin(b/D)
-
-        else:
-            beta = np.pi - np.arcsin(b/D)
-
-        return beta
-
-    beta = angle_beta(b, D, z, zb)
-
-    return  - np.sin(beta) * np.sin(theta) * np.sin(phi) - np.cos(beta) * np.cos(theta)
-
 #function to integrate a function in log-log scale
 def integration_log(x, y):
 
@@ -140,211 +39,443 @@ def integration_log(x, y):
         [a, b] = calculate_ab(xi, xf, yi, yf)
         return a/(b+1)*(xf**(b+1) - xi**(b+1))
 
-    #Calculate total integral from init to final a*x^b
     integral = 0
-    deltaS = 0
 
-    for i in range (1, len(x)):
-        deltaS = delta_S(x[i-1], x[i], y[i-1], y[i])
-        integral = integral + deltaS
+    # Because the function integral_log works only if there is more than two elements not zero
+    idx=(y > 0.0)
+    if sum(idx) > 2:
 
-    integral = np.nan_to_num(integral)
+        x = x[idx]
+        y = y[idx]
+
+        #Calculate total integral from init to final a*x^b
+        deltaS = 0
+
+        for i in range (1, len(x)):
+            deltaS = delta_S(x[i-1], x[i], y[i-1], y[i])
+            integral = integral + deltaS
+
+            integral = np.nan_to_num(integral)
 
     return integral
 
-def f(theta, phi, eps, z, L, b, R, E, T, zb):
+def tau_anistropic(E, z, phi, zb, L, D_star, b, R, T):
 
-    """
-    Return the function for the integration in phi : f = dn * sigma * (1 - cos(alpha)) * sin(theta)
-        where dn is the density of photons, sigma is the dimensionless cross section of the interaction,
-              alpha is the between the two momenta of the two photons in the observer's frame
+    def density_n_cst(eps, T, theta):
 
-    Parameters:
-        theta   : angle formed by the ray (from the star) and the straight line connecting the centre of the star and a position z on the line of sight (rad)
-        phi     : angle around the direction between the centre of the star and the position along the line of sight (rad)
-        eps     : energy of the target-photon (keV)
-        z       : position along the line of sight (cm)
-        L       : the distance to the gamma-source (cm)
-        D_star  : distance to the star (cm)
-        b       : impact parameter (cm)
-        E       : energy of the gamma-photon (keV)
-        T       : temperature of the star (K)
-        zb      : position along the line of sight nearly the star (cm)
-    """
+        """
+        Density of the photons is not isotropic : dn = Bnu * cos(theta)/(c * h**2 *nu)
 
-    #Global constants
-    mc2 = 510.9989461 #electron mass (keV)
+        Parameters:
+            eps   : energy of the target-photon (keV)
+            theta : angle formed by the ray (from the star) and the line connecting the centre of the star and a position z on the line of sight (rad)
+            T     : temperature of the star (K)
+        """
 
-    D = distance(zb, z, b)
+        #Global constants
+        h = 6.6260755e-34/conv_en #Planck's constant in keV*s
+        c = 2.99792458e+10 #light speed in cm/s
 
-    cos_alpha = angle_alpha(b, D, z, zb, theta, phi)
-    epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/mc2 # epsc in keV/mc2
+        nu = eps/h
 
-    #First : sigma (dimensionless)
-    def cross_section(epsc):
+        def planck(nu, T):
 
-        def parameter_s(epsc):
+            #Global constants
+            kb = 1.380658e-23/conv_en #Boltzmann's constant in keV/K
+            c = 2.99792458e+10 #light speed in cm/s
 
-            return epsc**2
+            return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(kb*T)) - 1)
 
-        def parameter_beta(epsc):
+        Bnu = planck(nu, T)
 
-            s = parameter_s(epsc)
-            return np.sqrt(1 - 1/s)
+        return Bnu/(c * h**2 * nu) #return dn in cm^3/sr/keV
 
-        beta = parameter_beta(epsc)
-        beta = np.nan_to_num(beta)
+    def density_n(eps, T, theta):
 
-        return (1 - beta**2) * ((3 - beta**4) * np.log((1 + beta)/(1 - beta)) - 2 * beta * (2 - beta**2))
+        """
+        Density of the photons is not isotropic : dn = Bnu * cos(theta)/(c * h**2 *nu)
 
-    dn = density_n(eps, T, theta)
-    sigma = cross_section(epsc)
+        Parameters:
+            eps   : energy of the target-photon (keV)
+            theta : angle formed by the ray (from the star) and the line connecting the centre of the star and a position z on the line of sight (rad)
+            T     : temperature of the star (K)
+        """
 
-    return dn * sigma * (1 - cos_alpha) * np.sin(theta)
+        #Global constants
+        h = 6.6260755e-34/conv_en #Planck's constant in keV*s
+        c = 2.99792458e+10 #light speed in cm/s
 
-def f_cst(theta, phi, eps, z, L, b, R, E, T, zb):
+        nu = eps/h
 
-    """
-    Return the function for the integration in phi : f = dn * sigma * (1 - cos(alpha)) * sin(theta)
-        where dn is the density of photons, sigma is the dimensionless cross section of the interaction,
-              alpha is the between the two momenta of the two photons in the observer's frame
+        def planck(nu, T):
 
-    Parameters:
-        theta   : angle formed by the ray (from the star) and the straight line connecting the centre of the star and a position z on the line of sight (rad)
-        phi     : angle around the direction between the centre of the star and the position along the line of sight (rad)
-        eps     : energy of the target-photon (keV)
-        z       : position along the line of sight (cm)
-        L       : the distance to the gamma-source (cm)
-        D_star  : distance to the star (cm)
-        b       : impact parameter (cm)
-        E       : energy of the gamma-photon (keV)
-        T       : temperature of the star (K)
-        zb      : position along the line of sight nearly the star (cm)
-    """
+            #Global constants
+            kb = 1.380658e-23/conv_en #Boltzmann's constant in keV/K
+            c = 2.99792458e+10 #light speed in cm/s
 
-    #Global constants
-    mc2 = 510.9989461 #electron mass (keV)
+            return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(kb*T)) - 1)
 
-    D = distance(zb, z, b)
+        Bnu = planck(nu, T)
 
-    cos_alpha = angle_alpha(b, D, z, zb, theta, phi)
-    epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/mc2 # epsc in keV/mc2
+        return Bnu/(c * h**2 * nu) * np.cos(theta) #return dn in cm^3/sr/keV
 
-    #First : sigma (dimensionless)
-    def cross_section(epsc):
+    def distance(zb, z, b):
 
-        def parameter_s(epsc):
+        """
+        Return for each position z along the line of sight the distance between this position and the centre of the star (cm)
 
-            return epsc**2
+        Parameters:
+            zb       : position on the line of sight closely the star (cm)
+            z        : position along the line of sight (cm)
+            b        : impact parameter
+        """
 
-        def parameter_beta(epsc):
+        return np.sqrt((zb - z)**2 + b**2)
 
-            s = parameter_s(epsc)
-            return np.sqrt(1 - 1/s)
+    def angle_alpha(b, D, z, zb, theta, phi):
 
-        beta = parameter_beta(epsc)
-        beta = np.nan_to_num(beta)
+        """
+        Return the cosinus of the angle (alpha) between the two momenta of the two photons in the observer's frame
 
-        return (1 - beta**2) * ((3 - beta**4) * np.log((1 + beta)/(1 - beta)) - 2 * beta * (2 - beta**2))
+        Parameters :
+            b     : impact parameter (cm)
+            D     : distance to the star from each position along the line of sight (cm)
+            z     : position along the line of sight (cm)
+            zb    : position along the line of sight nearly the star (cm)
+            theta : angle formed by the ray (from the star) and the straight line connecting the centre of the star and a position z on the line of sight (rad)
+                careful theta = 0 when the ray 'comes' from the centre of the star and theta = theta_max when the ray is tangent to the sphere
+            phi   : angle around the direction between the centre of the star and the position along the line of sight (rad)
+        """
 
-    dn = density_n_cst(eps, T, theta)
-    sigma = cross_section(epsc)
+        #Angle formed by the direction between the centre of the star and the position along the line of sight, and the line of sight (rad)
+        def angle_beta(b, D, z, zb):
 
-    return dn * sigma * (1 - cos_alpha) * np.sin(theta)
+            if z <= zb:
+                beta = np.arcsin(b/D)
 
-def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
+            else:
+                beta = np.pi - np.arcsin(b/D)
 
-    #Global constants
-    r0 =  2.818e-13 #classical electron radius (cm)
-    kb = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
+            return beta
 
-    integral_eps = np.zeros_like(z)
+        beta = angle_beta(b, D, z, zb)
 
-    # Energy of the target-photon
-    epsmin = mc2**2/E
-    epsmax = 10*kb*T
+        return  - np.sin(beta) * np.sin(theta) * np.sin(phi) - np.cos(beta) * np.cos(theta)
 
-    eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+    def f(theta, phi, eps, z, L, b, R, E, T, zb):
 
-    for j in range (len(z)): # integration over eps
+        """
+        Return the function for the integration in phi : f = dn * sigma * (1 - cos(alpha)) * sin(theta)
+            where dn is the density of photons, sigma is the dimensionless cross section of the interaction,
+                  alpha is the between the two momenta of the two photons in the observer's frame
 
-        integral_theta = np.zeros_like(eps)
-        D = distance(zb, z[j], b)
-        theta_max = np.arcsin(R/D)
+        Parameters:
+            theta   : angle formed by the ray (from the star) and the straight line connecting the centre of the star and a position z on the line of sight (rad)
+            phi     : angle around the direction between the centre of the star and the position along the line of sight (rad)
+            eps     : energy of the target-photon (keV)
+            z       : position along the line of sight (cm)
+            L       : the distance to the gamma-source (cm)
+            D_star  : distance to the star (cm)
+            b       : impact parameter (cm)
+            E       : energy of the gamma-photon (keV)
+            T       : temperature of the star (K)
+            zb      : position along the line of sight nearly the star (cm)
+        """
+
+        #Global constants
+        mc2 = 510.9989461 #electron mass (keV)
+
+        D = distance(zb, z, b)
+
+        cos_alpha = angle_alpha(b, D, z, zb, theta, phi)
+        epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/mc2 # epsc in keV/mc2
+
+        #First : sigma (dimensionless)
+        def cross_section(epsc):
+
+            def parameter_s(epsc):
+
+                return epsc**2
+
+            def parameter_beta(epsc):
+
+                s = parameter_s(epsc)
+                return np.sqrt(1 - 1/s)
+
+            beta = parameter_beta(epsc)
+            beta = np.nan_to_num(beta)
+
+            return (1 - beta**2) * ((3 - beta**4) * np.log((1 + beta)/(1 - beta)) - 2 * beta * (2 - beta**2))
+
+        dn = density_n(eps, T, theta)
+        sigma = cross_section(epsc)
+
+        return dn * sigma * (1 - cos_alpha) * np.sin(theta)
+
+    def f_cst(theta, phi, eps, z, L, b, R, E, T, zb):
+
+        """
+        Return the function for the integration in phi : f = dn * sigma * (1 - cos(alpha)) * sin(theta)
+            where dn is the density of photons, sigma is the dimensionless cross section of the interaction,
+                  alpha is the between the two momenta of the two photons in the observer's frame
+
+        Parameters:
+            theta   : angle formed by the ray (from the star) and the straight line connecting the centre of the star and a position z on the line of sight (rad)
+            phi     : angle around the direction between the centre of the star and the position along the line of sight (rad)
+            eps     : energy of the target-photon (keV)
+            z       : position along the line of sight (cm)
+            L       : the distance to the gamma-source (cm)
+            D_star  : distance to the star (cm)
+            b       : impact parameter (cm)
+            E       : energy of the gamma-photon (keV)
+            T       : temperature of the star (K)
+            zb      : position along the line of sight nearly the star (cm)
+        """
+
+        #Global constants
+        mc2 = 510.9989461 #electron mass (keV)
+
+        D = distance(zb, z, b)
+
+        cos_alpha = angle_alpha(b, D, z, zb, theta, phi)
+        epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/mc2 # epsc in keV/mc2
+
+        #First : sigma (dimensionless)
+        def cross_section(epsc):
+
+            def parameter_s(epsc):
+
+                return epsc**2
+
+            def parameter_beta(epsc):
+
+                s = parameter_s(epsc)
+                return np.sqrt(1 - 1/s)
+
+            beta = parameter_beta(epsc)
+            beta = np.nan_to_num(beta)
+
+            return (1 - beta**2) * ((3 - beta**4) * np.log((1 + beta)/(1 - beta)) - 2 * beta * (2 - beta**2))
+
+        dn = density_n_cst(eps, T, theta)
+        sigma = cross_section(epsc)
+
+        return dn * sigma * (1 - cos_alpha) * np.sin(theta)
+
+    def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
+
+        #Global constants
+        r0 =  2.818e-13 #classical electron radius (cm)
+        kb = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
+
+        integral_eps = np.zeros_like(z)
+
+        # Energy of the target-photon
+        epsmin = mc2**2/E
+        epsmax = 10*kb*T
+
+        eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+
+        for j in range (len(z)): # integration over eps
+
+            integral_theta = np.zeros_like(eps)
+            D = distance(zb, z[j], b)
+            theta_max = np.arcsin(R/D)
+            theta = np.linspace(0, theta_max, 10)
+
+            for l in range (len(eps)): # integration over theta
+                integral_phi = np.zeros_like(theta)
+
+                for m in range (len(theta)): # integration over phi
+
+                    integrand = f(theta[m], phi, eps[l], z[j], L, b, R, E, T, zb)
+                    integrand = np.nan_to_num(integrand)
+
+                    idx=(integrand > 0.0)
+
+                    integral_phi[m] = integration_log(phi, integrand)
+
+                integral_theta[l] = integration_log(theta, integral_phi)
+
+            integral_eps[j] = integration_log(eps, integral_theta) #you get d(tau)/dx
+
+        return  1/2.0 * np.pi * r0**2 * integral_eps
+
+    tau = calculate_tau(E, z, phi, zb, L, D_star, b, R, T)
+
+    return tau
+
+def tau_cste(E, T, z, b, zb, R):
+
+    def density_n(eps, T, R, b):
+
+        """
+        Density of the photons at zb : dn = 2 * pi * int_0^theta_max Bnu * cos(theta)/(c * h**2 *nu) * sin(theta)
+
+        Parameters:
+            eps     : energy of the target-photon (keV)
+            T       : temperature of the star (K)
+            R       : radius of the star (cm)
+            b       : impact parameter (cm)
+        """
+
+        #Global constants
+        h = 6.6260755e-34/conv_en #Planck's constant in keV*s
+        c = 2.99792458e+10 #light speed in cm/s
+
+        nu = eps/h
+
+        def planck(nu, T):
+
+            #Global constants
+            kb = 1.380658e-23/conv_en #Boltzmann's constant in keV/K
+            c = 2.99792458e+10 #light speed in cm/s
+
+            return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(kb*T)) - 1)
+
+        Bnu = planck(nu, T)
+
+        theta_max = np.arcsin(R/b)
         theta = np.linspace(0, theta_max, 10)
 
-        for l in range (len(eps)): # integration over theta
-            integral_phi = np.zeros_like(theta)
+        dn_phi = Bnu/(c * h**2 * nu) * np.cos(theta) * np.sin(theta)
 
-            for m in range (len(theta)): # integration over phi
+        integral = integration_log(theta, dn_phi)
 
-                integrand = f(theta[m], phi, eps[l], z[j], L, b, R, E, T, zb)
-                integrand = np.nan_to_num(integrand)
+        return 2 * np.pi * integral #return dn in cm^3/keV
 
-                idx=(integrand > 0.0)
+    def distance(zb, z, b):
 
-                # Because the function integral_log works only if there is more than two elements not zero
-                if sum(idx) > 2:
-                    integral_phi[m] = integration_log(phi[idx], integrand[idx])
+        """
+        Return for each position z along the line of sight the distance between this position and the centre of the star (cm)
 
-            # Because the function integral_log works only if there is more than two elements not zero
-            idx=(integral_phi > 0.0)
-            if sum(idx) > 2:
-                integral_theta[l] = integration_log(theta[idx], integral_phi[idx])
+        Parameters:
+            zb       : position on the line of sight closely the star (cm)
+            z        : position along the line of sight (cm)
+            b        : impact parameter
+        """
 
-            # Because the function integral_log works only if there is more than two elements not zero
-            idx=(integral_theta > 0.0)
-            if sum(idx) > 2:
-                integral_eps[j] = integration_log(eps[idx], integral_theta[idx]) #you get d(tau)/dx
+        return np.sqrt((zb - z)**2 + b**2)
 
-    return  1/2.0 * np.pi * r0**2 * integral_eps
+    def angle_alpha(b, D, z, zb):
 
-def calculate_tau_cst(E, z, phi, zb, L, D_star, b, R, T):
+        """
+        Return the cosinus of the angle (alpha) between the two momenta of the two photons in the observer's frame
 
-    #Global constants
-    r0 =  2.818e-13 #classical electron radius (cm)
-    kb = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
+        Parameters :
+            b     : impact parameter (cm)
+            D     : distance to the star from each position along the line of sight (cm)
+            z     : position along the line of sight (cm)
+            zb    : position along the line of sight nearly the star (cm)
+            theta : angle formed by the ray (from the star) and the straight line connecting the centre of the star and a position z on the line of sight (rad)
+                careful theta = 0 when the ray 'comes' from the centre of the star and theta = theta_max when the ray is tangent to the sphere
+            phi   : angle around the direction between the centre of the star and the position along the line of sight (rad)
+        """
 
-    integral_eps = np.zeros_like(z)
+        #Angle formed by the direction between the centre of the star and the position along the line of sight, and the line of sight (rad)
+        def angle_beta(b, D, z, zb):
 
-    # Energy of the target-photon
-    epsmin = mc2**2/E
-    epsmax = 10*kb*T
+            if z <= zb:
+                beta = np.arcsin(b/D)
 
-    eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+            else:
+                beta = np.pi - np.arcsin(b/D)
 
-    for j in range (len(z)): # integration over eps
+            return beta
 
-        integral_theta = np.zeros_like(eps)
-        D = distance(zb, z[j], b)
-        theta_max = np.arcsin(R/D)
-        theta = np.linspace(0, theta_max, 10)
+        beta = angle_beta(b, D, z, zb)
 
-        for l in range (len(eps)): # integration over theta
-            integral_phi = np.zeros_like(theta)
+        return  np.pi - beta
 
-            for m in range (len(theta)): # integration over phi
+    def f(b, z, zb, eps, E, T, R):
 
-                integrand = f_cst(theta[m], phi, eps[l], z[j], L, b, R, E, T, zb)
-                integrand = np.nan_to_num(integrand)
+        """
+        Return the function for the integration over eps : f = dn * sigma * (1 - cos(alpha))
+            where dn is the density of photons, sigma is the dimensionless cross section of the interaction,
+                  alpha is the between the two momenta of the two photons in the observer's frame
 
-                idx=(integrand > 0.0)
+        Parameters:
+            b       : impact parameter (cm)
+            z       : position along the line of sight (cm)
+            zb      : position along the line of sight nearly the star (cm)
+            eps     : energy of the target-photon (keV)
+            E       : energy of the gamma-photon (keV)
+            T       : temperature of the star (K)
+            R       : radius of the star (cm)
+        """
 
-                # Because the function integral_log works only if there is more than two elements not zero
-                if sum(idx) > 2:
-                    integral_phi[m] = integration_log(phi[idx], integrand[idx])
+        #Global constants
+        mc2 = 510.9989461 #electron mass (keV)
 
-            # Because the function integral_log works only if there is more than two elements not zero
-            idx=(integral_phi > 0.0)
-            if sum(idx) > 2:
-                integral_theta[l] = integration_log(theta[idx], integral_phi[idx])
+        D = distance(zb, z, b)
 
-            # Because the function integral_log works only if there is more than two elements not zero
-            idx=(integral_theta > 0.0)
-            if sum(idx) > 2:
-                integral_eps[j] = integration_log(eps[idx], integral_theta[idx]) #you get d(tau)/dx
+        alpha = angle_alpha(b, D, z, zb)
+        cos_alpha = np.cos(alpha)
+        epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/mc2 # epsc in keV/mc2
 
-    return  1/2.0 * np.pi * r0**2 * integral_eps
+        #First : sigma (dimensionless)
+        def cross_section(epsc):
+
+            def parameter_s(epsc):
+
+                return epsc**2
+
+            def parameter_beta(epsc):
+
+                s = parameter_s(epsc)
+                return np.sqrt(1 - 1/s)
+
+            beta = parameter_beta(epsc)
+            beta = np.nan_to_num(beta)
+
+            return (1 - beta**2) * ((3 - beta**4) * np.log((1 + beta)/(1 - beta)) - 2 * beta * (2 - beta**2))
+
+        dn = density_n(eps, T, R, b)
+        sigma = cross_section(epsc)
+
+        return dn * sigma * (1 - cos_alpha)
+
+    def calculate_tau(E, T, z, b, zb, R):
+
+        """
+        Return the value of (d tau)/dz : int_{(mc^2)^2/E}^{infty} f
+
+        Parameters:
+            E       : energy of the gamma-photon (keV)
+            T       : temperature of the star (K)
+            z       : position along the line of sight (cm)
+            b       : impact parameter (cm)
+            zb      : position along the line of sight nearly the star (cm)
+            R       : radius of the star (cm)
+        """
+
+        #Global constants
+        r0 =  2.818e-13 #classical electron radius (cm)
+        kb = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
+
+        integral_eps = np.zeros_like(z)
+
+        # Energy of the target-photon
+        epsmin = mc2**2/E
+        epsmax = 10*kb*T
+
+        eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+
+        for i in range (len(z)):
+
+            integrand = np.zeros_like(eps)
+
+            for j in range (len(eps)):
+
+                integrand[j] = f(b, z[i], zb, eps[j], E, T, R)
+
+            integral_eps[i] = integration_log(eps, integrand) #you get d(tau)/dx
+
+        return  1/2.0 * np.pi * r0**2 * integral_eps
+
+    tau = calculate_tau(E, T, z, b, zb, R)
+
+    return tau
 
 # Global constants
 conv_l = 1.45979e13      # Conversion factor from au to cm
@@ -373,8 +504,8 @@ E_tev = E*1e-9   # TeV
 
 
 # Calculation of the transmittance
-tau = calculate_tau(E, z, phi, zb, L, D_star, b, R, T)
-tau_cst = calculate_tau_cst(E, z, phi, zb, L, D_star, b, R, T)
+tau = tau_anistropic(E, z, phi, zb, L, D_star, b, R, T)
+tau_cst = tau_cste(E, T, z, b, zb, R)
 z_au = z/conv_l # in au
 zb_au = zb/conv_l #in au
 

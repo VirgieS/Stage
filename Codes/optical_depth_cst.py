@@ -19,29 +19,16 @@ from scipy.integrate import quad
 
 #Important functions for the calculation
 
-
-def distance(zb, z, b):
-
-    """
-    Return for each position z along the line of sight the distance between this position and the centre of the star (cm)
-
-    Parameters:
-        zb       : position on the line of sight closely the star (cm)
-        z        : position along the line of sight (cm)
-        b        : impact parameter
-    """
-
-    return np.sqrt((zb - z)**2 + b**2)
-
 def density_n(eps, T, R, b):
 
     """
-    Density of the photons is not isotropic : dn = Bnu * cos(theta)/(c * h**2 *nu)
+    Density of the photons at zb : dn = 2 * pi * int_0^theta_max Bnu * cos(theta)/(c * h**2 *nu) * sin(theta)
 
     Parameters:
-        eps   : energy of the target-photon (keV)
-        theta : angle formed by the ray (from the star) and the line connecting the centre of the star and a position z on the line of sight (rad)
-        T     : temperature of the star (K)
+        eps     : energy of the target-photon (keV)
+        T       : temperature of the star (K)
+        R       : radius of the star (cm)
+        b       : impact parameter (cm)
     """
 
     #Global constants
@@ -59,23 +46,30 @@ def density_n(eps, T, R, b):
         return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(kb*T)) - 1)
 
     Bnu = planck(nu, T)
-    D = distance(zb, z, b)
-    theta_b_max = np.arcsin(R/b)
-    theta_b = np.linspace(0, theta_b_max, 100)
 
-    dn = Bnu/(c * h**2 * nu) * np.cos(theta_b) * np.sin(theta_b)
+    theta_max = np.arcsin(R/b)
+    theta = np.linspace(0, theta_max, 10)
 
-    idx=(dn > 0.0)
+    dn_phi = Bnu/(c * h**2 * nu) * np.cos(theta) * np.sin(theta)
 
-    # Because the function integral_log works only if there is more than two elements not zero
-    if sum(idx) > 2:
-        density_cst = integration_log(theta_b[idx], dn[idx])
-    else:
-        density_cst = 0
+    integral = integration_log(theta, dn_phi)
 
-    return 2*np.pi*density_cst
+    return 2 * np.pi * integral #return dn in cm^3/keV
 
-def angle_alpha(b, D, z, zb, theta, phi):
+def distance(zb, z, b):
+
+    """
+    Return for each position z along the line of sight the distance between this position and the centre of the star (cm)
+
+    Parameters:
+        zb       : position on the line of sight closely the star (cm)
+        z        : position along the line of sight (cm)
+        b        : impact parameter
+    """
+
+    return np.sqrt((zb - z)**2 + b**2)
+
+def angle_alpha(b, D, z, zb):
 
     """
     Return the cosinus of the angle (alpha) between the two momenta of the two photons in the observer's frame
@@ -103,7 +97,7 @@ def angle_alpha(b, D, z, zb, theta, phi):
 
     beta = angle_beta(b, D, z, zb)
 
-    return  - np.sin(beta) * np.sin(theta) * np.sin(phi) - np.cos(beta) * np.cos(theta)
+    return  np.pi - beta
 
 #function to integrate a function in log-log scale
 def integration_log(x, y):
@@ -125,36 +119,40 @@ def integration_log(x, y):
         [a, b] = calculate_ab(xi, xf, yi, yf)
         return a/(b+1)*(xf**(b+1) - xi**(b+1))
 
-    #Calculate total integral from init to final a*x^b
-    integral = 0
-    deltaS = 0
+    # Because the function integral_log works only if there is more than two elements not zero
+    idx=(y > 0.0)
+    if sum(idx) > 2:
 
-    for i in range (1, len(x)):
-        deltaS = delta_S(x[i-1], x[i], y[i-1], y[i])
-        integral = integral + deltaS
+        x = x[idx]
+        y = y[idx]
 
-    integral = np.nan_to_num(integral)
+        #Calculate total integral from init to final a*x^b
+        integral = 0
+        deltaS = 0
+
+        for i in range (1, len(x)):
+            deltaS = delta_S(x[i-1], x[i], y[i-1], y[i])
+            integral = integral + deltaS
+
+            integral = np.nan_to_num(integral)
 
     return integral
 
-def f(theta, phi, eps, z, L, b, R, E, T, zb):
+def f(b, z, zb, eps, E, T, R):
 
     """
-    Return the function for the integration in phi : f = dn * sigma * (1 - cos(alpha)) * sin(theta)
+    Return the function for the integration over eps : f = dn * sigma * (1 - cos(alpha))
         where dn is the density of photons, sigma is the dimensionless cross section of the interaction,
               alpha is the between the two momenta of the two photons in the observer's frame
 
     Parameters:
-        theta   : angle formed by the ray (from the star) and the straight line connecting the centre of the star and a position z on the line of sight (rad)
-        phi     : angle around the direction between the centre of the star and the position along the line of sight (rad)
-        eps     : energy of the target-photon (keV)
-        z       : position along the line of sight (cm)
-        L       : the distance to the gamma-source (cm)
-        D_star  : distance to the star (cm)
         b       : impact parameter (cm)
+        z       : position along the line of sight (cm)
+        zb      : position along the line of sight nearly the star (cm)
+        eps     : energy of the target-photon (keV)
         E       : energy of the gamma-photon (keV)
         T       : temperature of the star (K)
-        zb      : position along the line of sight nearly the star (cm)
+        R       : radius of the star (cm)
     """
 
     #Global constants
@@ -162,7 +160,8 @@ def f(theta, phi, eps, z, L, b, R, E, T, zb):
 
     D = distance(zb, z, b)
 
-    cos_alpha = angle_alpha(b, D, z, zb, theta, phi)
+    alpha = angle_alpha(b, D, z, zb)
+    cos_alpha = np.cos(alpha)
     epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/mc2 # epsc in keV/mc2
 
     #First : sigma (dimensionless)
@@ -182,13 +181,24 @@ def f(theta, phi, eps, z, L, b, R, E, T, zb):
 
         return (1 - beta**2) * ((3 - beta**4) * np.log((1 + beta)/(1 - beta)) - 2 * beta * (2 - beta**2))
 
-    sigma = cross_section(epsc)
-
     dn = density_n(eps, T, R, b)
+    sigma = cross_section(epsc)
 
     return dn * sigma * (1 - cos_alpha)
 
-def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
+def calculate_tau(E, T, z, b, zb, R):
+
+    """
+    Return the value of (d tau)/dz : int_{(mc^2)^2/E}^{infty} f
+
+    Parameters:
+        E       : energy of the gamma-photon (keV)
+        T       : temperature of the star (K)
+        z       : position along the line of sight (cm)
+        b       : impact parameter (cm)
+        zb      : position along the line of sight nearly the star (cm)
+        R       : radius of the star (cm)
+    """
 
     #Global constants
     r0 =  2.818e-13 #classical electron radius (cm)
@@ -202,36 +212,15 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
 
     eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
 
-    for j in range (len(z)): # integration over eps
+    for i in range (len(z)):
 
-        integral_theta = np.zeros_like(eps)
-        D = distance(zb, z[j], b)
-        theta_max = np.arcsin(R/D)
-        theta = np.linspace(0, theta_max, 10)
+        integrand = np.zeros_like(eps)
 
-        for l in range (len(eps)): # integration over theta
-            integral_phi = np.zeros_like(theta)
+        for j in range (len(eps)):
 
-            for m in range (len(theta)): # integration over phi
+            integrand[j] = f(b, z[i], zb, eps[j], E, T, R)
 
-                integrand = f(theta[m], phi, eps[l], z[j], L, b, R, E, T, zb)
-                integrand = np.nan_to_num(integrand)
-
-                idx=(integrand > 0.0)
-
-                # Because the function integral_log works only if there is more than two elements not zero
-                if sum(idx) > 2:
-                    integral_phi[m] = integration_log(phi[idx], integrand[idx])
-
-            # Because the function integral_log works only if there is more than two elements not zero
-            idx=(integral_phi > 0.0)
-            if sum(idx) > 2:
-                integral_theta[l] = integration_log(theta[idx], integral_phi[idx])
-
-            # Because the function integral_log works only if there is more than two elements not zero
-            idx=(integral_theta > 0.0)
-            if sum(idx) > 2:
-                integral_eps[j] = integration_log(eps[idx], integral_theta[idx]) #you get d(tau)/dx
+        integral_eps[i] = integration_log(eps, integrand) #you get d(tau)/dx
 
     return  1/2.0 * np.pi * r0**2 * integral_eps
 
@@ -252,22 +241,21 @@ b = 5 * conv_l                          # impact parameter (cm)
 D_star =  np.sqrt(b**2 + (L - zb)**2)   # distance to the star (from us) (cm)
 D_gamma = np.sqrt(b**2 + L**2)          # distance between the star and the gamma-source (cm)
 R = 0.5 * conv_l                        # radius of the star (express in Rsun)
-T = 6000                               # temperature of the star (K)
+T = 10000                               # temperature of the star (K)
 z = np.linspace(0, L, 100)              # position along the line of sight (cm)
-phi = np.linspace(0, 2*np.pi, 10)       # angle polar
 
 # Energy of the gamma-photon
 E = 1e9  # keV
-E_gev = E*1e-9   # TeV
+E_tev = E*1e-9   # TeV
 
 
 # Calculation of the transmittance
-tau = calculate_tau(E, z, phi, zb, L, D_star, b, R, T)
+tau = calculate_tau(E, T, z, b, zb, R)
 z_au = z/conv_l # in au
 zb_au = zb/conv_l #in au
 
 b_au = b/conv_l # in au
-plt.plot(z_au, tau, label = "b = %.2f au and zb = %.2f au" %(b_au, zb_au))
+plt.plot(z_au, tau, label = "b = %.2f, zb = %.2f au" %(b_au, zb_au))
 
 D_star_au = D_star/conv_l # in au
 L_au = L/conv_l # in au
@@ -276,6 +264,6 @@ R_au = R/conv_l #in au
 plt.xlabel(r'z (au)')
 plt.ylabel(r'$\frac{d \tau_{\gamma \gamma}}{d z}$' ' ' r'$(cm^{-1})$' )
 #plt.title(u'Optical depth for the interaction between 'r'$\gamma$' '-rays at %.2f GeV \n and photons of a star at %.2f K and a radius %.2f au' %(E_gev, T, R_au))
-#plt.text(100, 1,'D$_{star}$ = %.2f au, L = %.2f au' %(D_star_au, L_au))
+plt.text(0, 0, u'D$_{star}$ = %.2f au, L = %.2f au \n E$_\gamma$=%.2f TeV' %(D_star_au, L_au, E_tev))
 plt.legend()
 plt.show()
