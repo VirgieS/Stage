@@ -6,9 +6,9 @@ import numpy as np
 from math import *
 from scipy.integrate import quad
 
-def distance(beta, L, R, z): #distance between the gamma photon and the source IR
+def distance(beta, L, D_s, z): #distance between the gamma photon and the source IR
 
-    return np.sqrt((L - z)**2 + Rs**2 - 2 * (L - z) * Rs * np.cos(beta))
+    return np.sqrt((L - z)**2 + D_s**2 - 2 * (L - z) * D_s * np.cos(beta))
 
 """
 density of the photons is not isotropic and is : dn = u/(a*T^4) * Bnu/(c*h*nu)
@@ -166,7 +166,7 @@ def calculate_tau(E, u_in, b, d, T, z, zb):
         if epsmin > epsmax:
             continue
         else:
-            eps = u8
+            eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
 
         for j in range(len(z)):
 
@@ -198,18 +198,18 @@ number_bin_E = 80
 number_bin_eps = 40.0
 
 #Distance to the source
-R = np.array([2, 10, 20]) *  3.085678e21#distance between the gamma-source and the IR source (cm)
-Rs = 12 * 3.085678e21 #distance between us and the IR source (cm)
-L = 10 * 3.085678e21 #distance between us and the gamma-source (cm)
+D_gamma = np.array([4, 10, 20]) *  3.085678e21#distance between the gamma-source and the IR source (cm)
+D_s = 8.5 * 3.085678e21 #distance between us and the IR source (cm)
+L = 12 * 3.085678e21 #distance between us and the gamma-source (cm)
 
-for k in range (len(R)):
+for k in range (len(D_gamma)):
 
-    beta = np.arccos((L**2 + Rs**2 - R[k]**2)/(2 * Rs * L))
+    beta = np.arccos((L**2 + D_s**2 - D_gamma[k]**2)/(2 * D_s * L))
 
-    b = Rs * np.sin(beta) #impact parameter (cm)
+    b = D_s * np.sin(beta) #impact parameter (cm)
     z = np.linspace(0, L, 100) #position along the line of sight (cm)
-    zb = np.sqrt(R[k]**2 - b**2) #position along the line of sight closely the source IR (cm)
-    d = distance(beta, L, Rs, z)
+    zb = np.sqrt(D_gamma[k]**2 - b**2) #position along the line of sight closely the source IR (cm)
+    d = distance(beta, L, D_s, z)
 
     #Parameters
     T = 25 #temperature of the CMB (K)
@@ -223,17 +223,17 @@ for k in range (len(R)):
     E_tev = E*1e-9 #TeV
 
     tau = calculate_tau(E, u_in, b, d, T, z, zb)
-    R_kpc = R[k]/3.085678e21 #in kpc
+    Dgamma_kpc = D_gamma[k]/3.085678e21 #in kpc
 
-    plt.plot(E_tev, np.exp(-tau), label = "R = %.2f kpc" %R_kpc)
+    plt.plot(E_tev, np.exp(-tau), label = "D$_\gamma$ = %.2f kpc" %Dgamma_kpc)
 
-Rs_kpc = Rs/3.085678e21 #in kpc
+Ds_kpc = D_s/3.085678e21 #in kpc
 L_kpc = L/3.085678e21 #in kpc
 
 plt.xscale('log')
 plt.xlabel(r'$E_\gamma$' '(TeV)')
 plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
 plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with IR photons of a ponctual source at %.2f K' %T)
-plt.text(100, 1,'Rs = %.2f kpc, L = %.2f kpc' %(Rs_kpc, L_kpc))
+plt.text(100, 1,'D$_s$ = %.2f kpc, L = %.2f kpc' %(Ds_kpc, L_kpc))
 plt.legend()
 plt.show()
