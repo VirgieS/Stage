@@ -76,7 +76,7 @@ def angle_alpha(b, D, z, zb, theta, phi):
         phi   : angle around the direction between the centre of the star and the position along the line of sight (rad)
     """
 
-    #Angle formed by the direction between the centre of the star and the position along the line of sight, and the line of sight (rad)
+    #Return the cosinus of the angle formed by the direction between the centre of the star and the position along the line of sight, and the line of sight (rad)
     def angle_beta(b, D, z, zb):
 
         if z <= zb:
@@ -244,13 +244,13 @@ kb = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
 mc2 = 510.9989461        # Electron mass (keV)
 
 # For the vector eps and E
-number_bin_E = 40
-number_bin_eps = 40.0
+number_bin_E = 10
+number_bin_eps = 20.0
 
 # Parameters for the code
 L = 20 * conv_l                         # the distance to the gamma-source (cm)
-zb = 10 * conv_l                        # position along the line of sight nearly the star (cm)
-b = 5 * conv_l                          # impact parameter (cm)
+zb = -10 * conv_l                        # position along the line of sight nearly the star (cm)
+b = 0 * conv_l                          # impact parameter (cm)
 D_star =  np.sqrt(b**2 + (L - zb)**2)   # distance to the star (from us) (cm)
 D_gamma = np.sqrt(b**2 + L**2)          # distance between the star and the gamma-source (cm)
 R = 0.5 * conv_l                        # radius of the star (express in Rsun)
