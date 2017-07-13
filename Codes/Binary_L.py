@@ -26,7 +26,7 @@ from Functions import *
 # Parameters for the system
 
     # Position of the observator
-alpha_o = np.pi/4                   # polar angle of the observator (rad)
+alpha_o = 0                  # polar angle of the observator (rad)
 beta_o = np.pi/2                    # colatitude of the observator (rad)
 
     # Position of the gamma-source
@@ -46,40 +46,41 @@ T_RG = 3000                         # temperature of RG (K)
 d_orb = 16 * aucm                   # orbital separation (cm)
 
 # Parameters for the integration
-L = 100 * aucm                      # maximum length for the integration about z (cm)
-z = np.linspace(0, L, 1000)          # position along the line of sight (cm)
-phi = np.linspace(0, 2*np.pi, 10)   # angle polar of the one source (cm)
+L = np.logspace(log10(10), log10(100), 100) * aucm  # maximum length for the integration about z (cm)
+phi = np.linspace(0, 2*np.pi, 10)   # angle polar of the one source (rad)
 
 # For the vector eps and E
 number_bin_E = 40
 
 # Energy of the gamma-photon
-Emin = 1e7/ergkev                   # Emin = 1e-2 TeV (erg)
-Emax = 1e14/ergkev                  # Emax = 1e5 TeV (erg)
-E = np.logspace(log10(Emin), log10(Emax), number_bin_E)  # erg
-E_tev = E*ergkev*1e-9               # TeV
+E = 1e9/ergkev          # erg
+E_tev = E*ergkev*1e-9   # TeV
 
 # Calculation of the transmittance
+tau = np.zeros_like(L)
 
-[b_WD, z_WD] = compute_WD(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma)
-[b_RG, z_RG] = compute_RG(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, d_orb)
-tau_WD = calculate_tau(E, z, phi, L, b_WD, R_WD, T_WD, z_WD)
+for i in range (len(L)):
 
-plt.plot(E, np.exp(-tau_WD), '--', label = "WD")
-tau_RG = calculate_tau(E, z, phi, L, b_RG, R_RG, T_RG, z_RG)
-plt.plot(E, np.exp(-tau_RG), '--', label = "RG")
+    z = np.linspace(0, L[i], 1000)          # position along the line of sight (cm)
+    print(i)
 
-tau_tot = tau_WD + tau_RG
-plt.plot(E, np.exp(-tau_tot), label = "two stars")
+    [b_WD, z_WD] = compute_WD(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma)
+    [b_RG, z_RG] = compute_RG(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, d_orb)
 
-R_WD_au = R_WD/aucm     # au
-R_RG_au = R_RG/aucm     # au
-d_orb_au = d_orb/aucm   # au
+    tau_WD = calculate_tau_L(E, z, phi, L[i], b_WD, R_WD, T_WD, z_WD)
+    tau_RG = calculate_tau_L(E, z, phi, L[i], b_RG, R_RG, T_RG, z_RG)
 
-plt.xscale('log')
-plt.xlabel(r'$E_\gamma$' '(TeV)')
-plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
-plt.title(u'Transmittance of 'r'$\gamma$' '-rays in interaction \n in a binary stellar system')
+    tau[i] = 1.0/2 * np.pi * r0**2 * (tau_WD + tau_RG)
+
+    R_WD_au = R_WD/aucm     # au
+    R_RG_au = R_RG/aucm     # au
+    d_orb_au = d_orb/aucm   # au
+
+L_au = L/aucm
+plt.plot(L_au, tau)
+plt.xlabel('L (au)')
+plt.ylabel(r'$\tau_{\gamma \gamma}$')
+plt.title(u'Optical depth of 'r'$\gamma$' '-rays at %.2f in interaction \n with photons from a binary stellar system' %E_tev)
 plt.text(100, 0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au))
 plt.legend(loc='lower right')
 plt.show()

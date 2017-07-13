@@ -244,7 +244,6 @@ def calculate_tau(E, z, phi, L, b, R, T, zb):
         else:
             eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
             print(i)
-            print(len(eps))
 
         for j in range (len(z)): # integration over eps
 
@@ -269,5 +268,59 @@ def calculate_tau(E, z, phi, L, b, R, T, zb):
             integral_eps[j] = integration_log(eps, integral_theta) #you get d(tau)/dx
 
         integral[i] = integration_log(z, integral_eps)
+
+    return  1/2.0 * np.pi * r0**2 * integral
+
+def calculate_tau_L(E, z, phi, L, b, R, T, zb):
+
+    """
+    Return tau(E) for all E
+    Parameters :
+        E           : energy of the gamma-photon (erg)
+        z           : position along the line of sight (cm)
+        phi         : angle around the direction between the centre of the star and the position along the line of sight (rad)
+        zb          : position along the line of sight nearly the star (cm)
+        L           : maximum distance for the integration about z (cm)
+        b           : impact parameter (cm)
+        R           : radius of the secundary source (cm)
+        T           : temperature of the secundary source (cm)
+    """
+
+    integral = np.zeros_like(E)
+    number_bin_eps = 20.0
+
+    # integration over z
+
+    integral_eps = np.zeros_like(z)
+
+    # Energy of the target-photon (erg)
+    epsmin = (mc2/ergkev)**2/E
+    epsmax = 10*kb*T
+
+    eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+
+    for j in range (len(z)): # integration over eps
+
+        integral_theta = np.zeros_like(eps)
+        D = distance(zb, z[j], b)
+        theta_max = np.arcsin(R/D)
+        theta = np.linspace(0, theta_max, 10)
+
+        for l in range (len(eps)): # integration over theta
+
+            integral_phi = np.zeros_like(theta)
+
+            for m in range (len(theta)): # integration over phi
+
+                integrand = f(theta[m], phi, eps[l], z[j], D, b, R, E, T, zb)
+                integrand = np.nan_to_num(integrand)
+
+                integral_phi[m] = integration_log(phi, integrand)
+
+            integral_theta[l] = integration_log(theta, integral_phi)
+
+        integral_eps[j] = integration_log(eps, integral_theta) #you get d(tau)/dx
+
+    integral = integration_log(z, integral_eps)
 
     return  1/2.0 * np.pi * r0**2 * integral
