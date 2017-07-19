@@ -48,7 +48,7 @@ def integration_log(x, y):
     return integral
 
 # for WD : compute z_WD, b_WD
-def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, theta_max_WD):
+def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma):
 
     """
     Return z_RG and b_RG
@@ -61,7 +61,6 @@ def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, theta_max_WD):
         r_gamma         : distance to the gamma-source (cm)
     """
 
-    condition_WD = False
     gamma_WD = np.arccos(-(np.sin(psi_gamma)*np.sin(psi_o)*np.cos(phi_gamma)*np.cos(phi_o) + np.sin(psi_gamma)*np.sin(psi_o)*np.sin(phi_gamma)*np.sin(phi_o) + np.cos(psi_gamma)*np.cos(psi_o)))
     b_WD = r_gamma * np.sin(gamma_WD)
 
@@ -73,14 +72,10 @@ def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, theta_max_WD):
 
         z_WD = - np.sqrt(r_gamma**2 - b_WD**2)
 
-    if gamma_WD <= theta_max_WD: # if there is an eclispe
-
-            condition_WD = True
-
-    return b_WD, z_WD, condition_WD
+    return b_WD, z_WD
 
 # for WD : compute z_RG, b_RG
-def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb, theta_max_RG):
+def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb):
 
     """
     Return z_RG and b_RG
@@ -94,8 +89,6 @@ def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb, theta_max_RG)
         d_orb           : orbital separation (cm)
     """
 
-    condition_RG = False
-
     gamma_RG = np.arccos((d_orb*np.sin(psi_o)*np.cos(phi_o) - r_gamma * (np.sin(psi_gamma)*np.sin(psi_o)*np.cos(phi_gamma)*np.cos(phi_o) + np.sin(psi_gamma)*np.sin(psi_o)*np.sin(phi_gamma)*np.sin(phi_o) + np.cos(psi_gamma)*np.cos(psi_o)))/(np.sqrt(d_orb**2 - 2*r_gamma*d_orb*np.sin(psi_gamma)*np.cos(phi_gamma) + r_gamma**2)))
 
     b_RG = sqrt(d_orb**2 - 2*r_gamma*d_orb*np.sin(psi_gamma)*np.sin(phi_gamma) + r_gamma**2) * np.sin(gamma_RG)
@@ -108,11 +101,7 @@ def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb, theta_max_RG)
 
         z_RG = - np.sqrt(r_gamma**2 - b_RG**2)
 
-    if gamma_RG <= theta_max_RG: # if there is an eclispe
-
-            condition_RG = True
-
-    return b_RG, z_RG, condition_RG
+    return b_RG, z_RG
 
 def distance(zb, z, b):
 
@@ -239,7 +228,7 @@ def calculate_tau(E, z, phi, L, b, R, T, zb):
     """
 
     integral = np.zeros_like(E)
-    number_bin_eps = 40.0
+    number_bin_eps = 20.0
 
     for i in range(len(E)): # integration over z
 
@@ -296,8 +285,7 @@ def calculate_tau_L(E, z, phi, L, b, R, T, zb):
         R           : radius of the secundary source (cm)
         T           : temperature of the secundary source (cm)
     """
-
-    integral = np.zeros_like(E)
+    
     number_bin_eps = 20.0
 
     # integration over z

@@ -61,9 +61,8 @@ def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, theta_max_WD):
         r_gamma         : distance to the gamma-source (cm)
     """
 
-    condition = False
+    condition_WD = False
     gamma_WD = np.arccos(-(np.sin(psi_gamma)*np.sin(psi_o)*np.cos(phi_gamma)*np.cos(phi_o) + np.sin(psi_gamma)*np.sin(psi_o)*np.sin(phi_gamma)*np.sin(phi_o) + np.cos(psi_gamma)*np.cos(psi_o)))
-
     b_WD = r_gamma * np.sin(gamma_WD)
 
     if gamma_WD <= np.pi/2:
@@ -76,9 +75,9 @@ def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, theta_max_WD):
 
     if gamma_WD <= theta_max_WD: # if there is an eclispe
 
-        condition = True
+            condition_WD = True
 
-    return b_WD, z_WD, condition
+    return b_WD, z_WD, condition_WD
 
 # for WD : compute z_RG, b_RG
 def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb, theta_max_RG):
@@ -95,7 +94,7 @@ def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb, theta_max_RG)
         d_orb           : orbital separation (cm)
     """
 
-    condition = False
+    condition_RG = False
 
     gamma_RG = np.arccos((d_orb*np.sin(psi_o)*np.cos(phi_o) - r_gamma * (np.sin(psi_gamma)*np.sin(psi_o)*np.cos(phi_gamma)*np.cos(phi_o) + np.sin(psi_gamma)*np.sin(psi_o)*np.sin(phi_gamma)*np.sin(phi_o) + np.cos(psi_gamma)*np.cos(psi_o)))/(np.sqrt(d_orb**2 - 2*r_gamma*d_orb*np.sin(psi_gamma)*np.cos(phi_gamma) + r_gamma**2)))
 
@@ -109,11 +108,11 @@ def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb, theta_max_RG)
 
         z_RG = - np.sqrt(r_gamma**2 - b_RG**2)
 
-    if gamma_RG <= theta_max_RG: # if there is an eclipse
+    if gamma_RG <= theta_max_RG: # if there is an eclispe
 
-        condition = True
+            condition_RG = True
 
-    return b_RG, z_RG, condition
+    return b_RG, z_RG, condition_RG
 
 def distance(zb, z, b):
 
@@ -224,7 +223,7 @@ def f(theta, phi, eps, z, D, b, R, E, T, zb):
 
     return dn * sigma * (1 - cos_alpha) * np.sin(theta)
 
-def calculate_tau(E, z, phi, L, b, R, T, zb, condition):
+def calculate_tau(E, z, phi, L, b, R, T, zb):
 
     """
     Return tau(E) for all E
@@ -240,7 +239,7 @@ def calculate_tau(E, z, phi, L, b, R, T, zb, condition):
     """
 
     integral = np.zeros_like(E)
-    number_bin_eps = 20.0
+    number_bin_eps = 40.0
 
     for i in range(len(E)): # integration over z
 
@@ -281,10 +280,7 @@ def calculate_tau(E, z, phi, L, b, R, T, zb, condition):
 
         integral[i] = integration_log(z, integral_eps)
 
-    tau = 1/2.0 * np.pi * r0**2 * integral
-    transmittance = np.exp(-tau)
-
-    return  transmittance
+    return  1/2.0 * np.pi * r0**2 * integral
 
 def calculate_tau_L(E, z, phi, L, b, R, T, zb):
 

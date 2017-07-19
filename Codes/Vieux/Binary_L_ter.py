@@ -21,7 +21,7 @@ import numpy as np
 from math import *
 from Physical_constants import *
 from Conversion_factor import *
-from Functions import *
+from Functionster import *
 
 # Parameters for the system
 
@@ -46,36 +46,23 @@ T_RG = 3000                         # temperature of RG (K)
 d_orb = 16 * aucm                   # orbital separation (cm)
 
 # Parameters for the integration
-    # Integration over z
-step_z = 0.1 * aucm                                                         # step for z
-Lmin = 5                                                                   # choosen L min at 10 au
-Lmax = 100                                                                  # choosen L max at 100 au
-step_L = 2                                                                  # step between each L-value
-L = np.linspace(Lmin, Lmax, int((Lmax-Lmin)/step_L) + 1) * aucm             # maximum length for the integration about z (cm)
-
-    # Integration over phi
-step_phi = 0.1                                                              # step for phi
-phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))                        # angle polar of the one source (rad)
+step_L = 0.1 * aucm                                             # step for integration over z
+L = np.logspace(log10(10), log10(100), int(90/5)) * aucm        # maximum length for the integration about z (cm)
+step_phi = 0.1                                                  # step for integration over phi
+phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))            # angle polar of the one source (rad)
 
 # Energy of the gamma-photon
 E = 1e9/ergkev          # erg
 E_tev = E*ergkev*1e-9   # TeV
 
 # Calculation of the transmittance
-
-    # Initialization of tau for each source and for the system
-tau_WD = np.zeros_like(L)
-tau_RG = np.zeros_like(L)
 tau = np.zeros_like(L)
 
-    # Distance from the RG to the source gamma
 r_RG = np.sqrt(d_orb**2 - 2*r_gamma*d_orb*np.sin(beta_gamma)*np.sin(alpha_gamma) + r_gamma**2)
 
-    # For the condition about the eclipse
 theta_max_WD = np.arcsin(R_WD/r_gamma)
 theta_max_RG = np.arcsin(R_RG/r_RG)
 
-    # Parameters b, zb and the condition
 [b_WD, z_WD, condition_WD] = compute_WD(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, theta_max_WD)
 [b_RG, z_RG, condition_RG] = compute_RG(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, d_orb, theta_max_RG)
 
@@ -85,37 +72,27 @@ if condition_WD or condition_RG:
 
 else :
 
-    z = np.linspace(0, L[0], int(L[0]/step_z))              # position along the line of sight (cm)
-    tau_WD[0] = calculate_tau_L(E, z, phi, b_WD, R_WD, T_WD, z_WD)
-    tau_RG[0] = calculate_tau_L(E, z, phi, b_RG, R_RG, T_RG, z_RG)
-    tau[0] = tau_WD[0] + tau_RG[0]
+    for i in range (len(L)):
 
-    print(L[0]/aucm)
-    print(tau_WD[0], tau_RG[0], tau[0])
+        z = np.linspace(0, L[i], int(L[i]/step_L))          # position along the line of sight (cm)
+        print(i)
 
-    for i in range (1, len(L)):
+        tau_WD = calculate_tau_L(E, z, phi, L[i], b_WD, R_WD, T_WD, z_WD)
+        tau_RG = calculate_tau_L(E, z, phi, L[i], b_RG, R_RG, T_RG, z_RG)
 
-        z = np.linspace(L[i-1], L[i], int((L[i]-L[i-1])/step_z))
-
-        tau_WD[i] = tau_WD[i-1] + calculate_tau_L(E, z, phi, b_WD, R_WD, T_WD, z_WD)
-        tau_RG[i] = tau_RG[i-1] + calculate_tau_L(E, z, phi, b_RG, R_RG, T_RG, z_RG)
-
-        tau[i] = tau_WD[i] + tau_RG[i]
-
-        print(L[i]/aucm)
-        print(tau_WD[i], tau_RG[i], tau[i])
+        tau[i] = tau_WD + tau_RG
+        print(tau_WD, tau_RG, tau[i])
 
     R_WD_au = R_WD/aucm     # au
     R_RG_au = R_RG/aucm     # au
     d_orb_au = d_orb/aucm   # au
-    L_au = L/aucm
+    print('coucou')
 
-    #plt.plot(L_au, tau_WD, label="WD")
-    #plt.plot(L_au, tau_RG, label="RG")
-    plt.plot(L_au, tau, label="both")
+    L_au = L/aucm
+    print('salut')
+    plt.plot(L_au, tau)
     plt.xlabel('L (au)')
     plt.ylabel(r'$\tau_{\gamma \gamma}$')
     plt.title(u'Optical depth of 'r'$\gamma$' '-rays at %.2f TeV in interaction \n with photons from a binary stellar system' %E_tev)
-    plt.text(60, 2.20,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au))
-    plt.legend()
+    plt.text(100, 0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au))
     plt.show()

@@ -56,9 +56,6 @@ L = np.logspace(log10(10), log10(100), int(90/5)) * aucm        # maximum length
 step_phi = 0.1                                          # step for integration over phi
 phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))    # angle polar of the one source (rad)
 
-# For the vector eps and E
-number_bin_E = 40
-
 # Energy of the gamma-photon
 E = 1e9/ergkev          # erg
 E_tev = E*ergkev*1e-9   # TeV
@@ -77,7 +74,10 @@ for i in range (len(L)):
     tau_WD = calculate_tau_L(E, z, phi, L[i], b_WD, R_WD, T_WD, z_WD, condition_WD)
     tau_RG = calculate_tau_L(E, z, phi, L[i], b_RG, R_RG, T_RG, z_RG, condition_RG)
 
-    tau[i] = 1.0/2 * np.pi * r0**2 * (tau_WD + tau_RG)
+    tau[i] = tau_WD + tau_RG
+
+    print(tau[i], tau_RG, tau_WD)
+
 
 R_WD_au = R_WD/aucm     # au
 R_RG_au = R_RG/aucm     # au
@@ -89,5 +89,4 @@ plt.xlabel('L (au)')
 plt.ylabel(r'$\tau_{\gamma \gamma}$')
 plt.title(u'Optical depth of 'r'$\gamma$' '-rays at %.2f TeV in interaction \n with photons from a binary stellar system' %E_tev)
 #plt.text(100, 0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au))
-#plt.legend(loc='lower right')
 plt.show()
