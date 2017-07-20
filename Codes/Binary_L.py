@@ -26,13 +26,13 @@ from Functions import *
 # Parameters for the system
 
     # Position of the observator
-alpha_o = np.pi/4                  # polar angle of the observator (rad)
+alpha_o = np.pi/4                   # polar angle of the observator (rad)
 beta_o = np.pi/2                    # colatitude of the observator (rad)
 
     # Position of the gamma-source
-alpha_gamma = np.pi                 # polar angle of the gamma-source (rad)
+alpha_gamma = 0                     # polar angle of the gamma-source (rad)
 beta_gamma = np.pi/2                # colatitude of the gamma-source (rad)
-r_gamma = 2 * aucm                  # distance to the gamma-source (cm)
+r_gamma = 2 * aucm                 # distance to the gamma-source (cm)
 r_gamma_au = r_gamma/aucm           # in au
 
     # For WD
@@ -50,7 +50,7 @@ d_orb = 16 * aucm                   # orbital separation (cm)
 step_z = 0.1 * aucm                                                         # step for z
 Lmin = 5                                                                   # choosen L min at 10 au
 Lmax = 100                                                                  # choosen L max at 100 au
-step_L = 2                                                                  # step between each L-value
+step_L = 0.5                                                                  # step between each L-value
 L = np.linspace(Lmin, Lmax, int((Lmax-Lmin)/step_L) + 1) * aucm             # maximum length for the integration about z (cm)
 
     # Integration over phi
@@ -58,7 +58,7 @@ step_phi = 0.1                                                              # st
 phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))                        # angle polar of the one source (rad)
 
 # Energy of the gamma-photon
-E = 1e9/ergkev          # erg
+E = 1e10/ergkev          # erg
 E_tev = E*ergkev*1e-9   # TeV
 
 # Calculation of the transmittance
@@ -110,12 +110,16 @@ else :
     d_orb_au = d_orb/aucm   # au
     L_au = L/aucm
 
-    #plt.plot(L_au, tau_WD, label="WD")
-    #plt.plot(L_au, tau_RG, label="RG")
+    f = plt.figure()
+    ax = f.add_subplot(111)
+    plt.text(0.5,0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au'  %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au), horizontalalignment='left',
+     verticalalignment='center', transform = ax.transAxes)
+    plt.plot(L_au, tau_WD, label="WD")
+    plt.plot(L_au, tau_RG, label="RG")
     plt.plot(L_au, tau, label="both")
     plt.xlabel('L (au)')
     plt.ylabel(r'$\tau_{\gamma \gamma}$')
     plt.title(u'Optical depth of 'r'$\gamma$' '-rays at %.2f TeV in interaction \n with photons from a binary stellar system' %E_tev)
-    plt.text(60, 2.20,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au))
-    plt.legend()
+    plt.legend(loc='lower right')
+    plt.savefig('Bla.png')
     plt.show()

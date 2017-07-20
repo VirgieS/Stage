@@ -46,12 +46,12 @@ T_RG = 3000                         # temperature of RG (K)
 d_orb = 16 * aucm                   # orbital separation (cm)
 
 # Parameters for the integration
-L = 25 * aucm                      # maximum length for the integration about z (cm)
+L = 30 * aucm                      # maximum length for the integration about z (cm)
 z = np.linspace(0, L, 100)         # position along the line of sight (cm)
 phi = np.linspace(0, 2*np.pi, 10)   # angle polar of the one source (cm)
 
 # For the vector eps and E
-number_bin_E = 30
+number_bin_E = 25
 
 # Energy of the gamma-photon
 Emin = 1e7/ergkev                   # Emin = 1e-2 TeV (erg)
@@ -76,22 +76,27 @@ if condition_WD or condition_RG:
 else :
 
     tau_WD = calculate_tau(E, z, phi, b_WD, R_WD, T_WD, z_WD)
-    plt.plot(E, np.exp(-tau_WD), '--', label = "WD")
-
     tau_RG = calculate_tau(E, z, phi, b_RG, R_RG, T_RG, z_RG)
-    plt.plot(E, np.exp(-tau_RG), '--', label = "RG")
-
     tau_tot = tau_WD + tau_RG
-    plt.plot(E, np.exp(-tau_tot), label = "two stars")
 
     R_WD_au = R_WD/aucm     # au
     R_RG_au = R_RG/aucm     # au
     d_orb_au = d_orb/aucm   # au
 
+    f = plt.figure()
+    ax = f.add_subplot(111)
+    plt.text(0.5, 0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au), horizontalalignment='left',
+     verticalalignment='center', transform = ax.transAxes)
+
+    plt.plot(E, np.exp(-tau_WD), '--', label = "WD")
+    plt.plot(E, np.exp(-tau_RG), '--', label = "RG")
+    plt.plot(E, np.exp(-tau_tot), label = "two stars")
     plt.xscale('log')
     plt.xlabel(r'$E_\gamma$' '(TeV)')
     plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
     plt.title(u'Transmittance of 'r'$\gamma$' '-rays in interaction \n in a binary stellar system')
-    plt.text(100,0.8,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au) )
+
     plt.legend(loc='lower right')
+    plt.savefig('Bla.png')
+
     plt.show()
