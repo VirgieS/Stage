@@ -286,7 +286,7 @@ def calculate_tau(E, z, phi, L, b, R, T, zb, condition):
 
     return  transmittance
 
-def calculate_tau_L(E, z, phi, L, b, R, T, zb, condition):
+def calculate_tau_L(E, z, phi, L, b, R, T, zb):
 
     """
     Return tau(E) for all E
@@ -300,50 +300,43 @@ def calculate_tau_L(E, z, phi, L, b, R, T, zb, condition):
         R           : radius of the secundary source (cm)
         T           : temperature of the secundary source (cm)
     """
-    # If there is an eclispse, transmittance is nul
 
-    if condition :
+    integral = np.zeros_like(E)
+    number_bin_eps = 20.0
+    #step_theta = 0.01
 
-        print("There is an eclipse")
+    # integration over z
 
-    else:
+    integral_eps = np.zeros_like(z)
 
-        number_bin_eps = 20.0
+    # Energy of the target-photon (erg)
+    epsmin = (mc2/ergkev)**2/E
+    epsmax = 10*kb*T
 
-        # integration over z
+    eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
 
-        integral_eps = np.zeros_like(z)
+    for j in range (len(z)): # integration over eps
 
-        # Energy of the target-photon (erg)
-        epsmin = (mc2/ergkev)**2/E
-        epsmax = 10*kb*T
+        integral_theta = np.zeros_like(eps)
+        D = distance(zb, z[j], b)
+        theta_max = np.arcsin(R/D)
+        theta = np.linspace(0, theta_max, 10)
 
-        eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+        for l in range (len(eps)): # integration over theta
 
-        for j in range (len(z)): # integration over eps
+            integral_phi = np.zeros_like(theta)
 
-            integral_theta = np.zeros_like(eps)
-            D = distance(zb, z[j], b)
-            theta_max = np.arcsin(R/D)
-            theta = np.linspace(0, theta_max, 10)
+            for m in range (len(theta)): # integration over phi
 
-            for l in range (len(eps)): # integration over theta
+                integrand = f(theta[m], phi, eps[l], z[j], D, b, R, E, T, zb)
+                integrand = np.nan_to_num(integrand)
 
-                integral_phi = np.zeros_like(theta)
+                integral_phi[m] = integration_log(phi, integrand)
 
-                for m in range (len(theta)): # integration over phi
+            integral_theta[l] = integration_log(theta, integral_phi)
 
-                    integrand = f(theta[m], phi, eps[l], z[j], D, b, R, E, T, zb)
-                    integrand = np.nan_to_num(integrand)
+        integral_eps[j] = integration_log(eps, integral_theta) #you get d(tau)/dx
 
-                    integral_phi[m] = integration_log(phi, integrand)
+    integral = integration_log(z, integral_eps)
 
-                integral_theta[l] = integration_log(theta, integral_phi)
-
-            integral_eps[j] = integration_log(eps, integral_theta) #you get d(tau)/dx
-
-        integral = integration_log(z, integral_eps)
-
-        tau = 1/2.0 * np.pi * r0**2 * integral
-
-    return  tau
+    return  1/2.0 * np.pi * r0**2 * integral

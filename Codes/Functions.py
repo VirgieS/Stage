@@ -48,7 +48,7 @@ def integration_log(x, y):
     return integral
 
 # for WD : compute z_WD, b_WD
-def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma):
+def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, theta_max_WD):
 
     """
     Return z_RG and b_RG
@@ -61,6 +61,7 @@ def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma):
         r_gamma         : distance to the gamma-source (cm)
     """
 
+    condition_WD = False
     gamma_WD = np.arccos(-(np.sin(psi_gamma)*np.sin(psi_o)*np.cos(phi_gamma)*np.cos(phi_o) + np.sin(psi_gamma)*np.sin(psi_o)*np.sin(phi_gamma)*np.sin(phi_o) + np.cos(psi_gamma)*np.cos(psi_o)))
     b_WD = r_gamma * np.sin(gamma_WD)
 
@@ -72,10 +73,14 @@ def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma):
 
         z_WD = - np.sqrt(r_gamma**2 - b_WD**2)
 
-    return b_WD, z_WD
+    if gamma_WD <= theta_max_WD: # if there is an eclispe
+
+            condition_WD = True
+
+    return b_WD, z_WD, condition_WD
 
 # for WD : compute z_RG, b_RG
-def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb):
+def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb, theta_max_RG):
 
     """
     Return z_RG and b_RG
@@ -89,6 +94,8 @@ def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb):
         d_orb           : orbital separation (cm)
     """
 
+    condition_RG = False
+
     gamma_RG = np.arccos((d_orb*np.sin(psi_o)*np.cos(phi_o) - r_gamma * (np.sin(psi_gamma)*np.sin(psi_o)*np.cos(phi_gamma)*np.cos(phi_o) + np.sin(psi_gamma)*np.sin(psi_o)*np.sin(phi_gamma)*np.sin(phi_o) + np.cos(psi_gamma)*np.cos(psi_o)))/(np.sqrt(d_orb**2 - 2*r_gamma*d_orb*np.sin(psi_gamma)*np.cos(phi_gamma) + r_gamma**2)))
 
     b_RG = sqrt(d_orb**2 - 2*r_gamma*d_orb*np.sin(psi_gamma)*np.sin(phi_gamma) + r_gamma**2) * np.sin(gamma_RG)
@@ -101,7 +108,11 @@ def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb):
 
         z_RG = - np.sqrt(r_gamma**2 - b_RG**2)
 
-    return b_RG, z_RG
+    if gamma_RG <= theta_max_RG: # if there is an eclispe
+
+            condition_RG = True
+
+    return b_RG, z_RG, condition_RG
 
 def distance(zb, z, b):
 
@@ -212,7 +223,7 @@ def f(theta, phi, eps, z, D, b, R, E, T, zb):
 
     return dn * sigma * (1 - cos_alpha) * np.sin(theta)
 
-def calculate_tau(E, z, phi, L, b, R, T, zb):
+def calculate_tau(E, z, phi, b, R, T, zb):
 
     """
     Return tau(E) for all E
@@ -228,7 +239,7 @@ def calculate_tau(E, z, phi, L, b, R, T, zb):
     """
 
     integral = np.zeros_like(E)
-    number_bin_eps = 20.0
+    number_bin_eps = 40.0
 
     for i in range(len(E)): # integration over z
 
@@ -271,7 +282,7 @@ def calculate_tau(E, z, phi, L, b, R, T, zb):
 
     return  1/2.0 * np.pi * r0**2 * integral
 
-def calculate_tau_L(E, z, phi, L, b, R, T, zb):
+def calculate_tau_L(E, z, phi, b, R, T, zb):
 
     """
     Return tau(E) for all E
@@ -285,8 +296,10 @@ def calculate_tau_L(E, z, phi, L, b, R, T, zb):
         R           : radius of the secundary source (cm)
         T           : temperature of the secundary source (cm)
     """
-    
+
+    integral = np.zeros_like(E)
     number_bin_eps = 20.0
+    #step_theta = 0.01
 
     # integration over z
 
