@@ -65,7 +65,7 @@ E_tev = E*ergkev*1e-9               # TeV
 [b_RG, z_RG] = compute_RG(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, d_orb)
 tau_WD = calculate_tau(E, z, phi, L, b_WD, R_WD, T_WD, z_WD)
 
-plt.plot(E, np.exp(-tau_WD), '--', label = "WD")
+plt.plot(E, np.exp(-tau_WD), '+', label = "WD")
 tau_RG = calculate_tau(E, z, phi, L, b_RG, R_RG, T_RG, z_RG)
 plt.plot(E, np.exp(-tau_RG), '--', label = "RG")
 

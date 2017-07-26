@@ -178,6 +178,30 @@ def density_n(eps, T, theta):
 
     return Bnu/(cl * hp**2 * nu) * np.cos(theta) #return dn in cm^3/sr/erg
 
+def gamma(X, Z):
+
+    """
+    Return the angles alpha, beta and the radius to the WD of the gamma-source
+
+    Parameters:
+        X   : X coordinate of the gamma-source (cm)
+        Z   : Z coordinate of the gamma-source (cm)
+
+    """
+
+    r = np.sqrt(X**2 + Z**2)
+
+    if X >=0:
+
+        alpha = 0
+
+    else:
+
+        alpha = np.pi
+
+    beta = np.arccos(Z/r)
+
+    return alpha, beta, r
 
 def f(theta, phi, eps, z, D, b, R, E, T, zb):
 

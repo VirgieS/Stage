@@ -78,7 +78,7 @@ theta_max_RG = np.arcsin(R_RG/r_RG)
     # Parameters b, zb and the condition
 [b_WD, z_WD, condition_WD] = compute_WD(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, theta_max_WD)
 [b_RG, z_RG, condition_RG] = compute_RG(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, d_orb, theta_max_RG)
-
+"""
 if condition_WD or condition_RG:
 
     print("There is an eclipse")
@@ -123,3 +123,42 @@ else :
     plt.legend(loc='lower right')
     plt.savefig('Bla.png')
     plt.show()
+"""
+z = np.linspace(0, L[0], int(L[0]/step_z))              # position along the line of sight (cm)
+tau_WD[0] = calculate_tau_L(E, z, phi, b_WD, R_WD, T_WD, z_WD)
+tau_RG[0] = calculate_tau_L(E, z, phi, b_RG, R_RG, T_RG, z_RG)
+tau[0] = tau_WD[0] + tau_RG[0]
+
+print(L[0]/aucm)
+print(tau_WD[0], tau_RG[0], tau[0])
+
+for i in range (1, len(L)):
+
+    z = np.linspace(L[i-1], L[i], int((L[i]-L[i-1])/step_z))
+
+    tau_WD[i] = tau_WD[i-1] + calculate_tau_L(E, z, phi, b_WD, R_WD, T_WD, z_WD)
+    tau_RG[i] = tau_RG[i-1] + calculate_tau_L(E, z, phi, b_RG, R_RG, T_RG, z_RG)
+
+    tau[i] = tau_WD[i] + tau_RG[i]
+
+    print(L[i]/aucm)
+    print(tau_WD[i], tau_RG[i], tau[i])
+
+R_WD_au = R_WD/aucm     # au
+R_RG_au = R_RG/aucm     # au
+d_orb_au = d_orb/aucm   # au
+L_au = L/aucm
+
+f = plt.figure()
+ax = f.add_subplot(111)
+plt.text(0.5,0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au'  %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au), horizontalalignment='left',
+ verticalalignment='center', transform = ax.transAxes)
+plt.plot(L_au, tau_WD, label="WD")
+plt.plot(L_au, tau_RG, label="RG")
+plt.plot(L_au, tau, label="both")
+plt.xlabel('L (au)')
+plt.ylabel(r'$\tau_{\gamma \gamma}$')
+plt.title(u'Optical depth of 'r'$\gamma$' '-rays at %.2f TeV in interaction \n with photons from a binary stellar system' %E_tev)
+plt.legend(loc='lower right')
+plt.savefig('Bla.png')
+plt.show()
