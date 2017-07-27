@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from math import *
 from Physical_constants import *
-from Conversion_factor import *
+from Conversion_factors import *
 
 #function to integrate a function in log-log scale
 def integration_log(x, y):
@@ -223,7 +223,7 @@ def f(theta, phi, eps, z, D, b, R, E, T, zb):
     """
 
     cos_alpha = angle_alpha(b, D, z, zb, theta, phi)
-    epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/(mc2/ergkev) # epsc/mc2 in erg
+    epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/(mc2/erg2kev) # epsc/mc2 in erg
 
     #First : sigma (dimensionless)
     def cross_section(epsc):
@@ -270,7 +270,7 @@ def calculate_tau(E, z, phi, b, R, T, zb):
         integral_eps = np.zeros_like(z)
 
         # Energy of the target-photon (erg)
-        epsmin = (mc2/ergkev)**2/E[i]
+        epsmin = (mc2/erg2kev)**2/E[i]
         epsmax = 10*kb*T
 
         # Because epsmin must be lower than epsmax
@@ -285,7 +285,8 @@ def calculate_tau(E, z, phi, b, R, T, zb):
             integral_theta = np.zeros_like(eps)
             D = distance(zb, z[j], b)
             theta_max = np.arcsin(R/D)
-            theta = np.linspace(0, theta_max, 10)
+            step_theta = 0.001
+            theta = np.linspace(0, theta_max, int(theta_max/step_theta))
 
             for l in range (len(eps)): # integration over theta
 
@@ -304,7 +305,7 @@ def calculate_tau(E, z, phi, b, R, T, zb):
 
         integral[i] = integration_log(z, integral_eps)
 
-    return  1/2.0 * np.pi * r0**2 * integral
+    return  1/2.0 * np.pi * r0**2 * integral, step_theta
 
 def calculate_tau_L(E, z, phi, b, R, T, zb):
 
@@ -330,7 +331,7 @@ def calculate_tau_L(E, z, phi, b, R, T, zb):
     integral_eps = np.zeros_like(z)
 
     # Energy of the target-photon (erg)
-    epsmin = (mc2/ergkev)**2/E
+    epsmin = (mc2/erg2kev)**2/E
     epsmax = 10*kb*T
 
     eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
@@ -360,3 +361,38 @@ def calculate_tau_L(E, z, phi, b, R, T, zb):
     integral = integration_log(z, integral_eps)
 
     return  1/2.0 * np.pi * r0**2 * integral
+
+def elementary_luminosity(beta_gamma, delta_beta, r_gamma, L_gamma):
+
+    """
+    Return the luminosity of a surface of the shock
+
+    Parameters:
+        beta_gamma          : colatitude of the gamma-source (rad)
+        delta_beta          : range for beta_gamma (rad)
+        r_gamma             : distance from the gamma-source to WD (cm)
+        L_gamma             : luminosity of the shock (erg/s)
+    """
+
+    beta_min = beta_gamma - delta_beta/2.0
+    beta_max = beta_gamma + delta_beta/2.0
+    dS = 2*np.pi*r_gamma**2*(np.cos(beta_min) - np.cos(beta_max))
+    S = 4*np.pi*r_gamma**2
+
+    return L_gamma * dS/S
+
+"""
+def lum_trans(tau, beta_gamma, delta_beta, alpha_gamma, r_gamma, L_gamma):
+
+    L_gamma_trans = 0
+
+    for i in range (len(beta_gamma)):
+
+        for j in range (len(alpha_gamma)):
+
+            L_gamma_i = elementary_luminosity(beta_gamma[i], delta_beta, r_gamma, L_gamma) # for one b and zb
+
+            L_gamma_trans += L_gamma_i * exp(-tau)
+
+    return
+"""

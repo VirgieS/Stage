@@ -20,10 +20,12 @@ xmin = -30.0                        # in au
 xmax = 40.0                         # in au
 
 zmin = 0.0                          # in au
-zmax = 60.0                         # n au
+zmax = 40.0                         # in au
 
-xvec = np.linspace(xmin, xmax, 100)    #int((xmax-xmin)/delta)
-zvec = np.linspace(zmin, zmax, 100)    #int((zmax-zmin)/delta)
+delta = 0.5                         # in ua
+
+xvec = np.linspace(xmin, xmax, int((xmax-xmin)/delta))
+zvec = np.linspace(zmin, zmax, int((zmax-zmin)/delta))
 
 xvec_cm = xvec * aucm               # in cm
 zvec_cm = zvec * aucm               # in cm

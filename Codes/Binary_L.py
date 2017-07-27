@@ -32,34 +32,34 @@ beta_o = np.pi/2                    # colatitude of the observator (rad)
     # Position of the gamma-source
 alpha_gamma = 0                     # polar angle of the gamma-source (rad)
 beta_gamma = np.pi/2                # colatitude of the gamma-source (rad)
-r_gamma = 2 * aucm                 # distance to the gamma-source (cm)
-r_gamma_au = r_gamma/aucm           # in au
+r_gamma = 2 * AU2cm                 # distance to the gamma-source (cm)
+r_gamma_au = r_gamma/AU2cm           # in au
 
     # For WD
-R_WD = 0.5 * aucm                   # radius of WD (cm)
+R_WD = 0.5 * AU2cm                   # radius of WD (cm)
 T_WD = 10000                        # temperature of WD (K)
 
     # For RG
-R_RG = 2 * aucm                     # radius of RG (cm)
+R_RG = 2 * AU2cm                     # radius of RG (cm)
 T_RG = 3000                         # temperature of RG (K)
 
-d_orb = 16 * aucm                   # orbital separation (cm)
+d_orb = 16 * AU2cm                   # orbital separation (cm)
 
 # Parameters for the integration
     # Integration over z
-step_z = 0.1 * aucm                                                         # step for z
+step_z = 0.1 * AU2cm                                                         # step for z
 Lmin = 5                                                                   # choosen L min at 10 au
 Lmax = 100                                                                  # choosen L max at 100 au
 step_L = 0.5                                                                  # step between each L-value
-L = np.linspace(Lmin, Lmax, int((Lmax-Lmin)/step_L) + 1) * aucm             # maximum length for the integration about z (cm)
+L = np.linspace(Lmin, Lmax, int((Lmax-Lmin)/step_L) + 1) * AU2cm             # maximum length for the integration about z (cm)
 
     # Integration over phi
 step_phi = 0.1                                                              # step for phi
 phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))                        # angle polar of the one source (rad)
 
 # Energy of the gamma-photon
-E = 1e10/ergkev          # erg
-E_tev = E*ergkev*1e-9   # TeV
+E = 1e10/erg2kev          # erg
+E_tev = E*erg2kev*1e-9   # TeV
 
 # Calculation of the transmittance
 
@@ -78,7 +78,7 @@ theta_max_RG = np.arcsin(R_RG/r_RG)
     # Parameters b, zb and the condition
 [b_WD, z_WD, condition_WD] = compute_WD(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, theta_max_WD)
 [b_RG, z_RG, condition_RG] = compute_RG(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, d_orb, theta_max_RG)
-"""
+
 if condition_WD or condition_RG:
 
     print("There is an eclipse")
@@ -102,13 +102,13 @@ else :
 
         tau[i] = tau_WD[i] + tau_RG[i]
 
-        print(L[i]/aucm)
+        print(L[i]/AU2cm)
         print(tau_WD[i], tau_RG[i], tau[i])
 
-    R_WD_au = R_WD/aucm     # au
-    R_RG_au = R_RG/aucm     # au
-    d_orb_au = d_orb/aucm   # au
-    L_au = L/aucm
+    R_WD_au = R_WD/AU2cm     # au
+    R_RG_au = R_RG/AU2cm     # au
+    d_orb_au = d_orb/AU2cm   # au
+    L_au = L/AU2cm
 
     f = plt.figure()
     ax = f.add_subplot(111)
@@ -129,7 +129,7 @@ tau_WD[0] = calculate_tau_L(E, z, phi, b_WD, R_WD, T_WD, z_WD)
 tau_RG[0] = calculate_tau_L(E, z, phi, b_RG, R_RG, T_RG, z_RG)
 tau[0] = tau_WD[0] + tau_RG[0]
 
-print(L[0]/aucm)
+print(L[0]/AU2cm)
 print(tau_WD[0], tau_RG[0], tau[0])
 
 for i in range (1, len(L)):
@@ -144,10 +144,10 @@ for i in range (1, len(L)):
     print(L[i]/aucm)
     print(tau_WD[i], tau_RG[i], tau[i])
 
-R_WD_au = R_WD/aucm     # au
-R_RG_au = R_RG/aucm     # au
-d_orb_au = d_orb/aucm   # au
-L_au = L/aucm
+R_WD_au = R_WD/AU2cm     # au
+R_RG_au = R_RG/AU2cm     # au
+d_orb_au = d_orb/AU2cm   # au
+L_au = L/AU2cm
 
 f = plt.figure()
 ax = f.add_subplot(111)
@@ -162,3 +162,4 @@ plt.title(u'Optical depth of 'r'$\gamma$' '-rays at %.2f TeV in interaction \n w
 plt.legend(loc='lower right')
 plt.savefig('Bla.png')
 plt.show()
+"""
