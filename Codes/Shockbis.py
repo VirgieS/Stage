@@ -49,9 +49,8 @@ if __name__ == '__main__':
 
     # shock coordinate
     r_gamma = hydro_data[0]['Rshock'] * AU2cm                       # in cm
-    step_beta = 0.5                                                 # delta(beta) in rad
-    beta_gamma = np.linspace(0, np.pi/2, int(np.pi/2/step_beta))    # colatitude of the gamma-source (rad)
-    delta_beta = step_beta/3
+    delta_beta = 0.5                                                 # delta(beta) in rad
+    beta_gamma = np.linspace(0, np.pi/2, int(np.pi/2/delta_beta))    # colatitude of the gamma-source (rad)
     alpha_gamma = np.array([0, np.pi])                              # polar angle of the gamma-source (rad)
 
     # Energy of the gamma photon
@@ -69,9 +68,14 @@ if __name__ == '__main__':
     step_phi = 0.1                                          # step for phi (rad)
     phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))    # angle polar of the one source (cm)
 
-    L_gamma_trans = np.zeros_like(time)
+    #s = (len(E), len(time))
+
+    #L_gamma_trans = np.zeros(s)
+    #print(len(time))
 
     for i in range (len(time)):
+
+        L_gamma_trans = np.zeros_like(E)
 
         if r_gamma[i] < R_WD :
 
@@ -86,6 +90,7 @@ if __name__ == '__main__':
             for k in range (len(alpha_gamma)):
 
                 b_WD, z_WD, condition_WD = compute_WD(beta_gamma[j], beta_o, alpha_gamma[k], alpha_o, r_gamma[i], theta_max_WD)
+                print(condition_WD)
 
                 if condition_WD :
 
@@ -94,15 +99,20 @@ if __name__ == '__main__':
                 else :
 
                     tau = calculate_tau(E, z, phi, b_WD, R_WD, T_WD, z_WD)
-                    print(len(tau))
+                    print(tau)
                     transmittance = np.exp(-tau)
 
                 # luminosity
                 L_gamma = gamma_data.spec_tot[i]
-                print(len(L_gamma))
 
-                #L_gamma_i = elementary_luminosity(beta_gamma[j], delta_beta, r_gamma[i], L_gamma)
+                L_gamma_i = elementary_luminosity(beta_gamma[j], delta_beta, r_gamma[i], L_gamma)
 
-                #L_gamma_trans[i] = L_gamma_trans[i] + L_gamma_i * transmittance
+                L_gamma_trans += L_gamma_i * transmittance
+                #L_gamma_trans[:,i] += L_gamma_i * transmittance
+
+        plt.xscale('log')
+        plt.plot(E_MeV, L_gamma_trans)
+        plt.plot(E_MeV, L_gamma)
+        plt.show
 
         #print(L_gamma_trans)

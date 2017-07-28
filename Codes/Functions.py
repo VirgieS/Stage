@@ -285,8 +285,8 @@ def calculate_tau(E, z, phi, b, R, T, zb):
             integral_theta = np.zeros_like(eps)
             D = distance(zb, z[j], b)
             theta_max = np.arcsin(R/D)
-            step_theta = 0.001
-            theta = np.linspace(0, theta_max, int(theta_max/step_theta))
+            #step_theta = 0.001
+            theta = np.linspace(0, theta_max, 10)#int(theta_max/step_theta))
 
             for l in range (len(eps)): # integration over theta
 
@@ -305,7 +305,7 @@ def calculate_tau(E, z, phi, b, R, T, zb):
 
         integral[i] = integration_log(z, integral_eps)
 
-    return  1/2.0 * np.pi * r0**2 * integral, step_theta
+    return  1/2.0 * np.pi * r0**2 * integral#, step_theta
 
 def calculate_tau_L(E, z, phi, b, R, T, zb):
 

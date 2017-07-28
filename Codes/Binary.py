@@ -87,7 +87,7 @@ else :
 
     f = plt.figure()
     ax = f.add_subplot(111)
-    plt.text(0.5, 0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au \n'r'$\delta \theta$' ' = %.2f rad' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au, step_theta), horizontalalignment='left',
+    plt.text(0.5, 0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au \n'r'$\delta \theta$' ' = %.3f rad' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au, step_theta), horizontalalignment='left',
      verticalalignment='center', transform = ax.transAxes)
 
     plt.plot(E, np.exp(-tau_WD), '+', label = "WD")
