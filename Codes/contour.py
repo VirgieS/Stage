@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from math import *
 from Physical_constants import *
-from Conversion_factor import *
+from Conversion_factors import *
 from Functions import *
 
 # Parameters for the system
@@ -16,8 +16,8 @@ beta_o = np.pi/2                    # colatitude of the observator (rad)
     # WD is at (0,0) and RG at (16,0)
 #delta = 0.5                         # step for each position in X and Z (au)
 
-xmin = -30.0                        # in au
-xmax = 40.0                         # in au
+xmin = -10.0                        # in au
+xmax = 30.0                         # in au
 
 zmin = 0.0                          # in au
 zmax = 40.0                         # in au
@@ -27,32 +27,32 @@ delta = 0.5                         # in ua
 xvec = np.linspace(xmin, xmax, int((xmax-xmin)/delta))
 zvec = np.linspace(zmin, zmax, int((zmax-zmin)/delta))
 
-xvec_cm = xvec * aucm               # in cm
-zvec_cm = zvec * aucm               # in cm
+xvec_cm = xvec * AU2cm              # in cm
+zvec_cm = zvec * AU2cm              # in cm
 
-X, Z = np.meshgrid(xvec, zvec)       # grid of positions of the gamma-source (au)
+X, Z = np.meshgrid(xvec, zvec)      # grid of positions of the gamma-source (au)
 
 # For WD
-R_WD = 0.5 * aucm                   # radius of WD (cm)
+R_WD = 0.5 * AU2cm                  # radius of WD (cm)
 T_WD = 10000                        # temperature of WD (K)
 
 # For RG
-R_RG = 2 * aucm                     # radius of RG (cm)
+R_RG = 2 * AU2cm                    # radius of RG (cm)
 T_RG = 3000                         # temperature of RG (K)
 
-d_orb = 16 * aucm                   # orbital separation (cm)
+d_orb = 16 * AU2cm                  # orbital separation (cm)
 
 # Energy of the gamma-photon
-E = 1e9/ergkev          # erg (1 TeV)
-E_tev = E*ergkev*1e-9   # TeV
+E = 1e9/erg2kev                     # erg (1 TeV)
+E_tev = E*erg2kev*1e-9              # TeV
 
 # Parameters for the integration
     # Integration over z
-step_z = 0.1 * aucm                                                         # step for z
+step_z = 0.1 * AU2cm                                                        # step for z
 Lmin = 5                                                                    # choosen L min at 10 au
 Lmax = 100                                                                  # choosen L max at 100 au
 step_L = 0.5                                                                # step between each L-value
-L = np.linspace(Lmin, Lmax, int((Lmax-Lmin)/step_L) + 1) * aucm             # maximum length for the integration about z (cm)
+L = np.linspace(Lmin, Lmax, int((Lmax-Lmin)/step_L) + 1) * AU2cm            # maximum length for the integration about z (cm)
 z = np.linspace(0, L[0], int(L[0]/step_z))                                  # position along the line of sight (cm)
 
     # Integration over phi
@@ -91,9 +91,8 @@ for i in range (len(xvec)):
 
         trans[j,i] = transmittance
 
-
-WD = plt.Circle((0, 0), R_WD/aucm, color='black')
-RG = plt.Circle((d_orb/aucm, 0), R_RG/aucm, color='r')
+WD = plt.Circle((0, 0), R_WD/AU2cm, color='black')
+RG = plt.Circle((d_orb/AU2cm, 0), R_RG/AU2cm, color='r')
 
 plt.xlabel(r'$X$'' coordinate (au)')
 plt.ylabel(r'$Z$'' coordinate (au)')
@@ -106,5 +105,7 @@ ax = fig.gca()
 
 ax.add_artist(WD)
 ax.add_artist(RG)
+
+plt.savefig('Map_1TeV.eps')
 
 plt.show()
