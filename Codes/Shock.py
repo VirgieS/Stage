@@ -1,15 +1,21 @@
 """
-For a binary stellar system. Here only the white draft has an importance, so we consider only this.
+Computation of the gamma emission after the absorption for a shock in a binary system where the gamma photons only interact with the photons of the white dwarft.
 
 Parameters that we can give for this code are:
     alpha_o         : polar angle of the observator in the orbital frame (rad)
     beta_o          : colatitude of the observator (rad)
-    v_gamma         : velocity of the shock (km/s)
-    time            : time since the shock (d)
-    R_WD            : radius of the WD (au)
+    R_WD            : radius of the WD (AU)
     T_WD            : temperature of the WD (K)
 
-Our coordinate to compute tau are theta, angle formed by the ray from the secundary source and the direction of the centre from a position on the line of sight and phi, polar angle around this axis.
+Parameters loaded from a Pickle:
+    time            : vector in days
+    r_gamma         : vector given in AU
+    E               : energy of the gamma photon in MeV
+
+Parameters for the integration :
+    beta_gamma      : linspace vector from 0 to pi/2
+    delta_beta      : step for beta_gamma
+    alpha_gamma     : only two values, 0 and pi (simplification)
 """
 
 # Librairies
@@ -17,52 +23,102 @@ import matplotlib.pyplot as plt
 import numpy as np
 from math import *
 from Physical_constants import *
-from Conversion_factor import *
+from Conversion_factors import *
 from Functions import *
-from LoadDataVirginie import load_results
+from Load import load_results
 
 # Parameters for the system
 
     # Fixed position of the observator
-alpha_o = 0                         # polar angle of the observator (rad)
-beta_o = np.pi/2                    # colatitude of the observator (rad)
+alpha_o = 0                                                     # polar angle of the observator (rad)
+beta_o = np.pi/2                                                # colatitude of the observator (rad)
 
-    # Position of the gamma-source
-v_gamma = 1000 * km2cm                   # velocity of the shock (cm/s)
-time_min = 0                            # minimum of the time scale (d)
-time_max = 20                           # maximum of the time scale (d)
-delta_time = 0.5                        # step of time (d)
-time = np.linspace(time_min, time_max, int((time_max - time_min)/delta_time)) * day2sec   # time scale (s)
-r_gamma_0 = np.zeros_like(time)         # initial radius of the shock (cm)
-r_gamma = r_gamma_0 + v_gamma * time    # distance to the gamma-source (cm)
-r_gamma_au = r_gamma/aucm               # in au
-beta_gamma = np.linspace(0, np.pi/2, 10) # colatitude of the gamma-source (rad)
-alpha_gamma = np.array([0, np.pi])         # polar angle of the gamma-source (rad)
+    # Load data
+
+        # Path to result directories and run ID
+path='/Users/stage/Documents/Stage/Codes/'
+runid='Datas'
+
+        # Values
+hydro_data,gamma_data = load_results(path+runid)
+
+    # time scale
+time = hydro_data[0]['Time'] * day2sec      # in sec
+
+    # shock coordinate
+r_gamma = hydro_data[0]['Rshock'] * AU2cm                       # in cm
+delta_beta = 0.5                                                # delta(beta) in rad
+beta_gamma = np.linspace(0, np.pi/2, int(np.pi/2/delta_beta))   # colatitude of the gamma-source (rad)
+alpha_gamma = np.array([0, np.pi])                              # polar angle of the gamma-source (rad)
+
+    # Energy of the gamma photon
+E = gamma_data.gam * MeV2erg                # in erg
+E_MeV = E/MeV2erg                           # in MeV
 
     # For WD
-R_WD = 0.5 * AU2cm                   # radius of WD (cm)
-T_WD = 10000                        # temperature of WD (K)
-L_WD = 3e38                         # luminosity of WD (erg/s)
+R_WD = 0.5 * AU2cm                          # radius of WD (cm)
+T_WD = 10000                                # temperature of WD (K)
 
-# Parameters for the integration
-L = 30 * AU2cm                                           # maximum length for the integration about z (cm)
-step_z = 0.5 * AU2cm                                     # step for z (cm)
+    # Parameters for the integration
+L = 30 * AU2cm                                          # maximum length for the integration about z (cm)
+step_z = 0.5 * AU2cm                                    # step for z (cm)
 z = np.linspace(0, L, int(L/step_z))                    # position along the line of sight (cm)
 step_phi = 0.1                                          # step for phi (rad)
 phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))    # angle polar of the one source (cm)
 
-# For the vector eps and E
-number_bin_E = 30
+# Computes the transmitted luminosity
 
-# Energy of the gamma-photon
-Emin = 1e7/ergkev                   # Emin = 1e-2 TeV (erg)
-Emax = 1e14/ergkev                  # Emax = 1e5 TeV (erg)
-E = np.logspace(log10(Emin), log10(Emax), number_bin_E)  # erg
-E_tev = E*ergkev*1e-9               # TeV
+L_gamma_trans = np.zeros_like(E)                        # initialization
 
-trans = np.zeros_like(time)
+theta_max_WD = np.arcsin(R_WD/r_gamma[100])             # for the condition of eclipse
 
+for j in range (len(beta_gamma)):
+
+    for k in range (len(alpha_gamma)):
+
+        b_WD, z_WD, condition_WD = compute_WD(beta_gamma[j], beta_o, alpha_gamma[k], alpha_o, r_gamma[100], theta_max_WD)
+
+        # if eclipse, then transmittance is nul else transmittance can be computed
+        if condition_WD :
+
+            transmittance = 0
+
+        else :
+
+            tau = calculate_tau(E, z, phi, b_WD, R_WD, T_WD, z_WD)
+            transmittance = np.exp(-tau)
+
+        # luminosity
+        L_gamma = gamma_data.spec_tot[50]                                                   # total luminosity of the shock (without absorption) (erg/s/eV)
+        L_gamma_i = elementary_luminosity(beta_gamma[j], delta_beta, r_gamma[50], L_gamma)  # luminosity of the surface dS (without absorption)  (erg/s/eV)
+        L_gamma_trans += L_gamma_i * transmittance                                          # total luminosity of the shock (with absorption)    (erg/s/eV)
+
+        if beta_gamma[j] == 0:
+
+            break
+
+L_gamma_trans = L_gamma_trans * E_MeV * MeV2eV          # in erg/s
+L_gamma = L_gamma * E_MeV * MeV2eV                      # in erg/s
+
+# Plotting the figure
+
+f = plt.figure()
+ax = f.add_subplot(111)
+plt.text(0.5, 0.5,u'$r_\gamma$ = '+str(round(r_gamma[50]/AU2cm,2))+' au and t ='+str(round(time[100]/day2sec,2))+' days', horizontalalignment='left',
+     verticalalignment='center', transform = ax.transAxes)
+plt.xscale('log')
+plt.title('Gamma emission of a classical nova')
+plt.xlabel(r'$E_\gamma$' ' (MeV)')
+plt.ylabel(r'$L_\gamma$'' (E) (erg/s)')
+plt.plot(E_MeV, L_gamma, label="without absorption")
+plt.plot(E_MeV, L_gamma_trans, label="with absorption")
+plt.legend(loc='best')
+plt.show()
+
+"""
 for i in range (len(time)):
+
+    L_gamma_trans = np.zeros_like(E)
 
     if r_gamma[i] < R_WD :
 
@@ -71,25 +127,30 @@ for i in range (len(time)):
     else :
 
         theta_max_WD = np.arcsin(R_WD/r_gamma[i])
-        transmittance = 0
 
-        for j in range (len(beta_gamma)):
+    for j in range (len(beta_gamma)):
 
-            for k in range (len(alpha_gamma)):
+        for k in range (len(alpha_gamma)):
 
-                [b_WD, z_WD, condition_WD] = compute_WD(beta_gamma[j], beta_o, alpha_gamma[k], alpha_o, r_gamma[i], theta_max_WD)
+            b_WD, z_WD, condition_WD = compute_WD(beta_gamma[j], beta_o, alpha_gamma[k], alpha_o, r_gamma[i], theta_max_WD)
+            print(condition_WD)
 
-                if condition_WD :
+            if condition_WD :
 
-                    transmittance += 0
+                transmittance = 0
 
-                else :
+            else :
 
-                    tau_WD = calculate_tau(E, z, phi, b_WD, R_WD, T_WD, z_WD)
-                    tau_tot = tau_WD
-                    transmittance += np.exp(-tau_tot)
+                tau = calculate_tau(E, z, phi, b_WD, R_WD, T_WD, z_WD)
+                transmittance = np.exp(-tau)
 
-        trans[i] = transmittance
+            # luminosity
+            L_gamma = gamma_data.spec_tot[i]
+            L_gamma_i = elementary_luminosity(beta_gamma[j], delta_beta, r_gamma[i], L_gamma)
+            L_gamma_trans += L_gamma_i * transmittance
 
-R_WD_au = R_WD/AU2cm     # au
-print(trans)
+    plt.xscale('log')
+    plt.plot(E_MeV, L_gamma_trans)
+    plt.plot(E_MeV, L_gamma)
+    plt.show()
+"""

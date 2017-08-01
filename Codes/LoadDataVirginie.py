@@ -91,18 +91,19 @@ if __name__ == '__main__':
 	print hydro_data[0]['Rshock']
 	print 'Shock velocity (km/s)'
 	print hydro_data[0]['Vframe']
+	"""
 	print 'Gamma-ray energies (MeV)'
 	print gamma_data.gam
 
-
+	"""
 	print 'Gamma-ray spectrum evolution over time (erg/s/eV)'
 	for i in range(gamma_data.time.size):
 		print 't=%.2f day : ' % gamma_data.time[i]
 		print gamma_data.spec_tot[i]
-	"""
 	E_MeV = gamma_data.gam
 	L_gamma = gamma_data.spec_tot[139]
 
 	plt.xscale('log')
 	plt.plot(E_MeV, L_gamma)
 	plt.show()
+	"""

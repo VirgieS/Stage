@@ -5,8 +5,10 @@
 kev2J = 1.602e-16           # from keV to J
 J2erg = 1e7                 # from J to erg
 erg2kev = 1/(kev2J * J2erg) # from erg to keV
-eV2erg=1.6022e-12           # from eV to erg
-MeV2erg=1.6022e-6           # from Mev to erg
+eV2erg = 1.6022e-12         # from eV to erg
+MeV2erg = 1.6022e-6         # from Mev to erg
+MeV2eV = 1e6                # from MeV to eV
+keV2eV = 1e3              # from keV to eV
 
 # Length
 

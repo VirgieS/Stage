@@ -374,25 +374,9 @@ def elementary_luminosity(beta_gamma, delta_beta, r_gamma, L_gamma):
         L_gamma             : luminosity of the shock (erg/s)
     """
 
-    beta_min = beta_gamma - delta_beta/2.0
-    beta_max = beta_gamma + delta_beta/2.0
+    beta_min = beta_gamma
+    beta_max = beta_gamma + delta_beta
     dS = 2*np.pi*r_gamma**2*(np.cos(beta_min) - np.cos(beta_max))
     S = 4*np.pi*r_gamma**2
 
     return L_gamma * dS/S
-
-"""
-def lum_trans(tau, beta_gamma, delta_beta, alpha_gamma, r_gamma, L_gamma):
-
-    L_gamma_trans = 0
-
-    for i in range (len(beta_gamma)):
-
-        for j in range (len(alpha_gamma)):
-
-            L_gamma_i = elementary_luminosity(beta_gamma[i], delta_beta, r_gamma, L_gamma) # for one b and zb
-
-            L_gamma_trans += L_gamma_i * exp(-tau)
-
-    return
-"""
