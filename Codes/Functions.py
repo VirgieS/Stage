@@ -8,6 +8,14 @@ from Conversion_factors import *
 #function to integrate a function in log-log scale
 def integration_log(x, y):
 
+    """
+    Return the integrale of a function in log-log scale
+
+    Parameters :
+        x           : abscisse of the function
+        y           : function that we integrate along x : y = f(x)
+    """
+
     #Looking for a and b for y = a*x^b
     def calculate_ab(xi, xf, yi, yf):
         logxi = np.log(xi)

@@ -10,14 +10,17 @@ Parameters that we can give for this code are:
     R      : radius of the star (au)
     T      : temperature of the star (K)
 """
-
-#librairies
+# Librairies
 import matplotlib.pyplot as plt
 import numpy as np
 from math import *
-from scipy.integrate import quad
+from Physical_constants import *
+from Conversion_factors import *
+from Functions import integration_log
 
-#Important functions for the calculation
+##=========##
+# Functions #
+##=========##
 
 def density_n(eps, T, theta):
 
@@ -30,23 +33,15 @@ def density_n(eps, T, theta):
         T     : temperature of the star (K)
     """
 
-    #Global constants
-    h = 6.6260755e-34/conv_en #Planck's constant in keV*s
-    c = 2.99792458e+10 #light speed in cm/s
-
-    nu = eps/h
+    nu = eps/(hp*erg2kev)
 
     def planck(nu, T):
 
-        #Global constants
-        kb = 1.380658e-23/conv_en #Boltzmann's constant in keV/K
-        c = 2.99792458e+10 #light speed in cm/s
-
-        return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(kb*T)) - 1)
+        return (2*(hp*erg2kev)*(nu**3))/(cl**2) * 1/(np.exp(((hp*erg2kev)*nu)/((kb*erg2kev)*T)) - 1)
 
     Bnu = planck(nu, T)
 
-    return Bnu/(c * h**2 * nu) * np.cos(theta) #return dn in cm^3/sr/keV
+    return Bnu/(cl * (hp*erg2kev)**2 * nu) * np.cos(theta) #return dn in cm^3/sr/keV
 
 def distance(zb, z, b):
 
@@ -91,38 +86,6 @@ def angle_alpha(b, D, z, zb, theta, phi):
 
     return  - np.sin(beta) * np.sin(theta) * np.sin(phi) - np.cos(beta) * np.cos(theta)
 
-#function to integrate a function in log-log scale
-def integration_log(x, y):
-
-    #Looking for a and b for y = a*x^b
-    def calculate_ab(xi, xf, yi, yf):
-        logxi = np.log(xi)
-        logxf = np.log(xf)
-        logyi = np.log(yi)
-        logyf = np.log(yf)
-        b = (logyf - logyi)/(logxf - logxi)
-        loga = logyi - b*logxi
-        a = np.exp(loga)
-        a = np.nan_to_num(a)
-        return a, b
-
-    #Calculate deltaS from deltaS = int from xi to xf a*x^b
-    def delta_S(xi, xf, yi, yf):
-        [a, b] = calculate_ab(xi, xf, yi, yf)
-        return a/(b+1)*(xf**(b+1) - xi**(b+1))
-
-    #Calculate total integral from init to final a*x^b
-    integral = 0
-    deltaS = 0
-
-    for i in range (1, len(x)):
-        deltaS = delta_S(x[i-1], x[i], y[i-1], y[i])
-        integral = integral + deltaS
-
-    integral = np.nan_to_num(integral)
-
-    return integral
-
 def f(theta, phi, eps, z, L, b, R, E, T, zb):
 
     """
@@ -142,9 +105,6 @@ def f(theta, phi, eps, z, L, b, R, E, T, zb):
         T       : temperature of the star (K)
         zb      : position along the line of sight nearly the star (cm)
     """
-
-    #Global constants
-    mc2 = 510.9989461 #electron mass (keV)
 
     D = distance(zb, z, b)
 
@@ -173,17 +133,29 @@ def f(theta, phi, eps, z, L, b, R, E, T, zb):
 
     return dn * sigma * (1 - cos_alpha) * np.sin(theta)
 
-def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
+def calculate_tau(E, z, phi, zb, b, R, T):
 
-    #Global constants
-    r0 =  2.818e-13 #classical electron radius (cm)
-    kb = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
+    """
+    Return the value of (d tau)/dz : int_{(mc^2)^2/E}^{infty} f
+
+    Parameters:
+        E       : energy of the gamma-photon (keV)
+        z       : position along the line of sight (cm)
+        phi     : polar angle (rad)
+        zb      : position along the line of sight closely the star (cm)
+        b       : impact parameter (cm)
+        R       : radius of the star (cm)
+        T       : temperature of the star (K)
+    """
 
     integral_eps = np.zeros_like(z)
 
     # Energy of the target-photon
     epsmin = mc2**2/E
-    epsmax = 10*kb*T
+    epsmax = 10*(kb*erg2kev)*T
+
+    # For the vector eps
+    number_bin_eps = 40.0
 
     eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
 
@@ -202,65 +174,50 @@ def calculate_tau(E, z, phi, zb, L, D_star, b, R, T):
                 integrand = f(theta[m], phi, eps[l], z[j], L, b, R, E, T, zb)
                 integrand = np.nan_to_num(integrand)
 
-                idx=(integrand > 0.0)
+                integral_phi[m] = integration_log(phi, integrand)
 
-                # Because the function integral_log works only if there is more than two elements not zero
-                if sum(idx) > 2:
-                    integral_phi[m] = integration_log(phi[idx], integrand[idx])
+            integral_theta[l] = integration_log(theta, integral_phi)
 
-            # Because the function integral_log works only if there is more than two elements not zero
-            idx=(integral_phi > 0.0)
-            if sum(idx) > 2:
-                integral_theta[l] = integration_log(theta[idx], integral_phi[idx])
-
-            # Because the function integral_log works only if there is more than two elements not zero
-            idx=(integral_theta > 0.0)
-            if sum(idx) > 2:
-                integral_eps[j] = integration_log(eps[idx], integral_theta[idx]) #you get d(tau)/dx
+        integral_eps[j] = integration_log(eps, integral_theta) #you get d(tau)/dx
 
     return  1/2.0 * np.pi * r0**2 * integral_eps
 
-# Global constants
-conv_l = 1.45979e13      # Conversion factor from au to cm
-conv_en = 1.602e-16      # Conversion factor from J to keV
-c = 2.99792458e+10       # Light speed in cm/s
-kb = 1.380658e-23/conv_en # Boltzmann's constant in keV/K
-mc2 = 510.9989461        # Electron mass (keV)
+if __name__ == '__main__':
 
-# For the vector eps
-number_bin_eps = 40.0
+        # Parameters for the code
+    L = 20 * AU2cm                          # the distance to the gamma-source (cm)
+    zb = 5 * AU2cm                         # position along the line of sight nearly the star (cm)
+    b = 5 * AU2cm                           # impact parameter (cm)
+    D_star =  np.sqrt(b**2 + (L - zb)**2)   # distance to the star (from us) (cm)
+    D_gamma = np.sqrt(b**2 + L**2)          # distance between the star and the gamma-source (cm)
+    R = 0.5 * AU2cm                         # radius of the star (express in Rsun)
+    T = 10000                               # temperature of the star (K)
+    z = np.linspace(0, L, 100)              # position along the line of sight (cm)
+    phi = np.linspace(0, 2*np.pi, 10)       # angle polar
 
-# Parameters for the code
-L = 20 * conv_l                         # the distance to the gamma-source (cm)
-zb = -5 * conv_l                        # position along the line of sight nearly the star (cm)
-b = 5 * conv_l                          # impact parameter (cm)
-D_star =  np.sqrt(b**2 + (L - zb)**2)   # distance to the star (from us) (cm)
-D_gamma = np.sqrt(b**2 + L**2)          # distance between the star and the gamma-source (cm)
-R = 0.5 * conv_l                        # radius of the star (express in Rsun)
-T = 10000                               # temperature of the star (K)
-z = np.linspace(0, L, 100)              # position along the line of sight (cm)
-phi = np.linspace(0, 2*np.pi, 10)       # angle polar
-
-# Energy of the gamma-photon
-E = 1e9  # keV
-E_tev = E*1e-9   # TeV
+        # Energy of the gamma-photon
+    E = 1e9                                 # keV
+    E_tev = E*keV2eV/TeV2eV                 # TeV
 
 
-# Calculation of the transmittance
-tau = calculate_tau(E, z, phi, zb, L, D_star, b, R, T)
-z_au = z/conv_l # in au
-zb_au = zb/conv_l #in au
+        # Computation and plot of the transmittance
+    tau = calculate_tau(E, z, phi, zb, b, R, T)
 
-b_au = b/conv_l # in au
-plt.plot(z_au, tau, label = "b = %.2f, zb = %.2f au" %(b_au, zb_au))
+    z_au = z/AU2cm                          # au
+    zb_au = zb/AU2cm                        # au
+    b_au = b/AU2cm                          # au
+    D_star_au = D_star/AU2cm                # au
+    L_au = L/AU2cm                          # au
+    R_au = R/AU2cm                          # au
 
-D_star_au = D_star/conv_l # in au
-L_au = L/conv_l # in au
-R_au = R/conv_l #in au
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
 
-plt.xlabel(r'z (au)')
-plt.ylabel(r'$\frac{d \tau_{\gamma \gamma}}{d z}$' ' ' r'$(cm^{-1})$' )
-#plt.title(u'Optical depth for the interaction between 'r'$\gamma$' '-rays at %.2f GeV \n and photons of a star at %.2f K and a radius %.2f au' %(E_gev, T, R_au))
-plt.text(0, 0, u'D$_{star}$ = %.2f au, L = %.2f au \n E$_\gamma$=%.2f TeV' %(D_star_au, L_au, E_tev))
-plt.legend()
-plt.show()
+    plt.plot(z_au, tau, label = "b = %.2f, zb = %.2f au" %(b_au, zb_au))
+    plt.xlabel(r'z (au)')
+    plt.ylabel(r'$\frac{d \tau_{\gamma \gamma}}{d z}$' ' ' r'$(cm^{-1})$' )
+    #plt.title(u'Optical depth for the interaction between 'r'$\gamma$' '-rays at %.2f GeV \n and photons of a star at %.2f K and a radius %.2f au' %(E_gev, T, R_au))
+    plt.text(0.65, 0.5, u'D$_{star}$ = %.2f au, L = %.2f au \n E$_\gamma$=%.2f TeV' %(D_star_au, L_au, E_tev), horizontalalignment='left',
+     verticalalignment='center', transform = ax.transAxes)
+    plt.legend(loc='best')
+    plt.show()

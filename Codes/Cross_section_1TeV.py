@@ -2,55 +2,101 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from math import *
+from Physical_constants import *
+from Conversion_factors import *
 
-#Parametre s (formula 3 from Gould's article)
-def parametre_s(eps, E, mc2, theta):
-    s = eps*E/(2*mc2**2)*(1-np.cos(theta))
-    ind = np.where(s>=1) #for pair production to occur, s>=1 and if s=1, it is the threshold condition.
-    return s, ind
+##===========##
+#  Functions  #
+##===========##
 
-#Parametre beta (formula 4 from Gould's article)
-def beta_func(s):
-    return np.sqrt(1-1/s)
-#voir si les deux fonctions fonctionnent
+def cross_section(eps, E, theta):
 
-#Cross section of the interaction photon-photon (formula 1 from Gould's article)
-def cross_section(s, r0):
-    beta = beta_func(s)
-    return 1/2.0 * np.pi * r0**2 * (1-beta**2)*((3-beta**4)*np.log((1+beta)/(1-beta))-2*beta*(2-beta**2))
+    """
+    Return the cross section of the interaction gamma-gamma (formula 1 from Gould's article) (cm^2)
 
-#Vector for the plot of the total cross section
-def vec_plot(theta, eps, E, mc2):
-    s = np.zeros_like(theta) #initialization
-    [s,ind] = parametre_s(eps, E, mc2, theta)
-    s = s[ind[0]]
-    return cross_section(s, r0), ind
+    Parameters:
+        eps         : energy of the target photon (eV)
+        E           : energy of the gamma photon (eV)
+        theta       : angle between the two momenta of the two photons (rad)
+    """
 
-#Constants
-c = 2.99792458e+10 #speed of light (cm/s)
-mc2 = 510.9989461e+3 #electron mass (eV)
-r0 =  2.818e-13 #classical electron radius (cm)
-conv_en = 1.602e-19 # Conversion factor from J to eV
-kb = 1.380658e-23/conv_en # Boltzmann's constant in eV/K
-T = 10000 #temperature of the source (K)
+    def beta_func(eps, E, theta):
 
-#Parametres for the photons (target and gamma)
+        """
+        Return the parameter beta (formula 4 from Gould's article)
 
-theta = np.linspace(0.000001,np.pi,100) #direction of the second photon (rad)
+        Parameters:
+            eps         : energy of the target photon (eV)
+            E           : energy of the gamma photon (eV)
+            theta       : angle between the two momenta of the two photons (rad)
+        """
 
-# Energy of the gamma-photon
-E = 1e12  # eV
-E_tev = E*1e-12   # TeV
+        def parameter_s(eps, E, theta):
 
-eps = kb * T * 2.821439372
+            """
+            Return the parameter s (formula 3 from Gould's article)
 
-[sigma, ind] = vec_plot(theta, eps, E, mc2)
-#eps_tev = eps
-plt.plot(theta[ind[0]], sigma, label="$\epsilon$ = %.2f eV" %eps)
+            Parameters:
+                eps         : energy of the target photon (eV)
+                E           : energy of the gamma photon (eV)
+                theta       : angle between the two momenta of the two photons (rad)
+            """
 
-plt.title('Cross section for a gamma-photon at %.2f TeV' %E_tev)
-plt.xlabel(r'$\theta$''(rad)')
-plt.ylabel(r'$\sigma_{int}$''(cm' r'$^2$'')')
-plt.xlim(0,np.pi)
-plt.legend()
-plt.show()
+            s = eps*E/(2*(mc2*keV2eV)**2)*(1-np.cos(theta))
+            ind = np.where(s>=1) #for pair production to occur, s>=1 and if s=1, it is the threshold condition.
+
+            return s, ind
+
+        s, ind = parameter_s(eps, E, theta)
+        s = s[ind[0]]
+
+        return np.sqrt(1-1/s), ind
+
+    beta, ind = beta_func(eps, E, theta)
+
+    return 1/2.0 * np.pi * r0**2 * (1-beta**2)*((3-beta**4)*np.log((1+beta)/(1-beta))-2*beta*(2-beta**2)), ind
+
+def vec_plot(eps, E, theta):
+    """
+    Return the vector cross section for the plot (cm^2)
+
+    Parameters:
+        eps         : energy of the target photon (eV)
+        E           : energy of the gamma photon (eV)
+        theta       : angle between the two momenta of the two photons (rad)
+
+    """
+
+    return cross_section(eps, E, theta)
+
+##=============================================================================##
+# Computation of the cross section for an particular energy of the gamma photon #
+##=============================================================================##
+
+if __name__ == '__main__':
+
+    # Parameters for the photons (target and gamma)
+
+        # direction of the second photon (rad)
+    theta = np.linspace(0.000001,np.pi,100)
+
+        # Energy of the gamma-photon
+    E = 1e12                                            # eV
+    E_tev = E/TeV2eV                                    # TeV
+
+        # Energy of the target photon
+    T = 10000                                           # temperature of the source (K)
+    eps = kb/eV2erg * T                                 # eV
+
+    # Computes the cross section in term of energy
+    sigma, ind = vec_plot(eps, E, theta)
+
+    # Plot of the cross section for the gamma photon at E_tev
+    plt.plot(theta[ind[0]], sigma, label="$\epsilon$ = %.2f eV" %eps)
+
+    plt.title('Cross section for a gamma-photon at %.2f TeV' %E_tev)
+    plt.xlabel(r'$\theta$''(rad)')
+    plt.ylabel(r'$\sigma_{\gamma, \gamma}$''(cm' r'$^2$'')')
+    plt.xlim(0,np.pi)
+    plt.legend()
+    plt.show()
