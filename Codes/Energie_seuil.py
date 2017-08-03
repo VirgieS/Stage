@@ -50,23 +50,15 @@ if __name__ == '__main__':
     theta = theta[ind[0]]
 
         # energy of the target photon (eV)
-    #l = np.array([1e-4, 10e-4, 100e-4, 1000e-4])        # wavelenght (cm)
-    #eps = energy(l)                                     # Energy (eV)
-    T = 10000
-    eps = (kb/eV2erg)*T
-    print(eps)
-    #l = l*1e4                                           # micrometer
+    l = np.array([1e-4, 10e-4, 100e-4, 1000e-4])        # wavelenght (cm)
+    eps = energy(l)                                     # Energy (eV)
+    l = l*1e4                                           # micrometer
 
     # Computation of the threshold energy for each energy of the target photon
-    """
     for i in range (len(eps)):
 
         Eth = energy_th(theta, eps[i])
         plt.plot(theta, Eth/GeV2eV, label="%d $\mu$m" %l[i])
-    """
-
-    Eth = energy_th(theta, eps)
-    plt.plot(theta, Eth/GeV2eV, label="%d K" %T)
 
     plt.yscale('log')
     plt.xlim(0,np.pi)
