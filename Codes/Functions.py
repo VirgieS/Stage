@@ -1,11 +1,9 @@
 #librairies
-import matplotlib.pyplot as plt
 import numpy as np
 from math import *
 from Physical_constants import *
 from Conversion_factors import *
 
-#function to integrate a function in log-log scale
 def integration_log(x, y):
 
     """
@@ -37,7 +35,7 @@ def integration_log(x, y):
 
     # Because the function integral_log works only if there is more than two elements not zero
     idx=(y > 0.0)
-    #idy=(y < 0.0)
+    #idy=(y < 0.0) # only used if the function has negative value
     idt = idx #+ idy
     if sum(idt) > 2:
 
@@ -55,11 +53,10 @@ def integration_log(x, y):
 
     return integral
 
-# for WD : compute z_WD, b_WD
 def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, theta_max_WD):
 
     """
-    Return z_RG and b_RG
+    Return z_WD, b_WD and condition_WD
 
     Parameters :
         psi_gamma       : colatitude of the gamma-source (rad)
@@ -67,12 +64,18 @@ def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, theta_max_WD):
         phi_gamma       : polar angle of the gamma-source (rad)
         phi_o           : polar angle of the observator (rad)
         r_gamma         : distance to the gamma-source (cm)
+	theta_max	: maximal angle for theta from the gamma source (rad)
     """
 
-    condition_WD = False
+    condition_WD = False		# first we suppose that there is no eclipse
+
+    # Compute of the angle gamma_WD (see figure) (rad)
     gamma_WD = np.arccos(-(np.sin(psi_gamma)*np.sin(psi_o)*np.cos(phi_gamma)*np.cos(phi_o) + np.sin(psi_gamma)*np.sin(psi_o)*np.sin(phi_gamma)*np.sin(phi_o) + np.cos(psi_gamma)*np.cos(psi_o)))
+
+    # Impact parameter (cm)
     b_WD = r_gamma * np.sin(gamma_WD)
 
+    # Position along the line of sight closely the WD (cm)
     if gamma_WD <= np.pi/2:
 
         z_WD = np.sqrt(r_gamma**2 - b_WD**2)
@@ -87,11 +90,10 @@ def compute_WD(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, theta_max_WD):
 
     return b_WD, z_WD, condition_WD
 
-# for WD : compute z_RG, b_RG
 def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb, theta_max_RG):
 
     """
-    Return z_RG and b_RG
+    Return z_RG, b_RG qnd condition_RG
 
     Parameters :
         psi_gamma       : colatitude of the gamma-source (rad)
@@ -100,14 +102,18 @@ def compute_RG(psi_gamma, psi_o, phi_gamma, phi_o, r_gamma, d_orb, theta_max_RG)
         phi_o           : polar angle of the observator (rad)
         r_gamma         : distance to the gamma-source (cm)
         d_orb           : orbital separation (cm)
+	theta_max	: maximal angle for theta from the gamma source (rad)
     """
 
-    condition_RG = False
+    condition_RG = False		# first we suppose that there is no eclipse
 
+    # Compute of the angle gamma_RG (see figure) (rad)
     gamma_RG = np.arccos((d_orb*np.sin(psi_o)*np.cos(phi_o) - r_gamma * (np.sin(psi_gamma)*np.sin(psi_o)*np.cos(phi_gamma)*np.cos(phi_o) + np.sin(psi_gamma)*np.sin(psi_o)*np.sin(phi_gamma)*np.sin(phi_o) + np.cos(psi_gamma)*np.cos(psi_o)))/(np.sqrt(d_orb**2 - 2*r_gamma*d_orb*np.sin(psi_gamma)*np.cos(phi_gamma) + r_gamma**2)))
 
+    # Impact parameter (cm)
     b_RG = sqrt(d_orb**2 - 2*r_gamma*d_orb*np.sin(psi_gamma)*np.sin(phi_gamma) + r_gamma**2) * np.sin(gamma_RG)
 
+    # Position along the line of sight closely the RG (cm)
     if gamma_RG <= np.pi/2:
 
         z_RG = np.sqrt(d_orb**2 - 2*r_gamma*d_orb*np.sin(psi_gamma)*np.sin(phi_gamma) + r_gamma**2- b_RG**2)
@@ -130,7 +136,7 @@ def distance(zb, z, b):
     Parameters:
         zb       : position on the line of sight closely the star (cm)
         z        : position along the line of sight (cm)
-        b        : impact parameter
+        b        : impact parameter (cm)
     """
 
     return np.sqrt((zb - z)**2 + b**2)
@@ -153,6 +159,16 @@ def angle_alpha(b, D, z, zb, theta, phi):
     #Return the cosinus of the angle formed by the direction between the centre of the star and the position along the line of sight, and the line of sight (rad)
     def angle_beta(b, D, z, zb):
 
+	"""
+	Return the angle (betq) formed by the direction from the position along the line of sight and the centre of the star and the direction of the gamma photon
+
+	Parameters:
+	    b     : impact parameter (cm)
+            D     : distance to the star from each position along the line of sight (cm)
+            z     : position along the line of sight (cm)
+            zb    : position along the line of sight nearly the star (cm)
+	"""
+
         if z <= zb:
             beta = np.arcsin(b/D)
 
@@ -168,10 +184,10 @@ def angle_alpha(b, D, z, zb, theta, phi):
 def density_n(eps, T, theta):
 
     """
-    Density of the photons is not isotropic : dn = Bnu * cos(theta)/(c * h**2 *nu)
+    Density of the photons is not isotropic : dn = Bnu * cos(theta)/(c * h**2 *nu) (cm^3/sr/erg)
 
     Parameters:
-        eps   : energy of the target-photon (keV)
+        eps   : energy of the target-photon (erg)
         theta : angle formed by the ray (from the star) and the line connecting the centre of the star and a position z on the line of sight (rad)
         T     : temperature of the star (K)
     """
@@ -189,7 +205,7 @@ def density_n(eps, T, theta):
 def gamma(X, Z):
 
     """
-    Return the angles alpha, beta and the radius to the WD of the gamma-source
+    Return the angles alpha, beta and the distance from the WD to the gamma-source in the perpendicular plane of the orbital plane
 
     Parameters:
         X   : X coordinate of the gamma-source (cm)
@@ -197,8 +213,9 @@ def gamma(X, Z):
 
     """
 
-    r = np.sqrt(X**2 + Z**2)
+    r = np.sqrt(X**2 + Z**2)		# cm
 
+    # azimutal angle (rad): in the plane alpha is only 0 or pi
     if X >=0:
 
         alpha = 0
@@ -207,6 +224,7 @@ def gamma(X, Z):
 
         alpha = np.pi
 
+    # Polar angle (rad)
     beta = np.arccos(Z/r)
 
     return alpha, beta, r
@@ -223,24 +241,45 @@ def f(theta, phi, eps, z, D, b, R, E, T, zb):
         phi     : angle around the direction between the centre of the star and the position along the line of sight (rad)
         eps     : energy of the target-photon (keV)
         z       : position along the line of sight (cm)
-        L       : the distance to the gamma-source (cm)
+        D       : distance to the gamma-source (cm)
         b       : impact parameter (cm)
-        E       : energy of the gamma-photon (keV)
+        E       : energy of the gamma-photon (erg)
         T       : temperature of the star (K)
         zb      : position along the line of sight nearly the star (cm)
     """
 
     cos_alpha = angle_alpha(b, D, z, zb, theta, phi)
-    epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/(mc2/erg2kev) # epsc/mc2 in erg
+    epsc = np.sqrt(eps * E/2 * (1 - cos_alpha))/(mc2/erg2kev) # epsc/(mc2 in erg)
 
     #First : sigma (dimensionless)
     def cross_section(epsc):
 
+	"""
+	Return the dimensionless cross section of the interaction gamma-gamma (formula 1 of Gould's article)
+
+	Parameter:
+	    epsc	: center-of-momentum system energy of a photon
+	"""
+
         def parameter_s(epsc):
+
+	    """
+	    Return the parameter s (formula 3 of Gould's article)
+
+	    Parameter:
+	        epsc	: center-of-momentum system energy of a photon
+	    """
 
             return epsc**2
 
         def parameter_beta(epsc):
+
+	    """
+	    Return the parameter beta (formula 4 of Gould's article)
+
+	    Parameter:
+	        epsc	: center-of-momentum system energy of a photon
+	    """
 
             s = parameter_s(epsc)
             return np.sqrt(1 - 1/s)
@@ -250,8 +289,8 @@ def f(theta, phi, eps, z, D, b, R, E, T, zb):
 
         return (1 - beta**2) * ((3 - beta**4) * np.log((1 + beta)/(1 - beta)) - 2 * beta * (2 - beta**2))
 
-    dn = density_n(eps, T, theta)
-    sigma = cross_section(epsc)
+    dn = density_n(eps, T, theta)	# differential density of target photons (cm^3/sr/erg)
+    sigma = cross_section(epsc)		# dimensionless cross section of the interaction gamma-gamma
 
     return dn * sigma * (1 - cos_alpha) * np.sin(theta)
 
@@ -278,23 +317,28 @@ def calculate_tau(E, z, phi, b, R, T, zb):
         integral_eps = np.zeros_like(z)
 
         # Energy of the target-photon (erg)
-        epsmin = (mc2/erg2kev)**2/E[i]
-        epsmax = 10*kb*T
+        epsmin = (mc2/erg2kev)**2/E[i]		# threshold condition for alpha = pi
+        epsmax = 10*kb*T			# do not need to compute to infinity
 
         # Because epsmin must be lower than epsmax
         if epsmin > epsmax:
+
             continue
+
         else:
+
+	    # we make a energy-grid with a constant energy step
             eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+
             print(i)
 
         for j in range (len(z)): # integration over eps
 
             integral_theta = np.zeros_like(eps)
-            D = distance(zb, z[j], b)
-            theta_max = np.arcsin(R/D)
+            D = distance(zb, z[j], b)		# compute the distance to the star for one position z[j] (cm)
+            theta_max = np.arcsin(R/D)		# compute theta_max for each position (rad)
             #step_theta = 0.001
-            theta = np.linspace(0, theta_max, 10)#int(theta_max/step_theta))
+            theta = np.linspace(0, theta_max, 10) #int(theta_max/step_theta))
 
             for l in range (len(eps)): # integration over theta
 
@@ -309,18 +353,19 @@ def calculate_tau(E, z, phi, b, R, T, zb):
 
                 integral_theta[l] = integration_log(theta, integral_phi)
 
-            integral_eps[j] = integration_log(eps, integral_theta) #you get d(tau)/dx
+            integral_eps[j] = integration_log(eps, integral_theta) # you get d(tau)/dx
 
-        integral[i] = integration_log(z, integral_eps)
+        integral[i] = integration_log(z, integral_eps) # you get tau
 
     return  1/2.0 * np.pi * r0**2 * integral#, step_theta
 
 def calculate_tau_L(E, z, phi, b, R, T, zb):
 
     """
-    Return tau(E) for all E
+    Return tau(E) for each distance along the line of sight
     Parameters :
         E           : energy of the gamma-photon (erg)
+		careful E is selected where there is absorption
         z           : position along the line of sight (cm)
         phi         : angle around the direction between the centre of the star and the position along the line of sight (rad)
         zb          : position along the line of sight nearly the star (cm)
@@ -330,9 +375,7 @@ def calculate_tau_L(E, z, phi, b, R, T, zb):
         T           : temperature of the secundary source (cm)
     """
 
-    integral = np.zeros_like(E)
     number_bin_eps = 20.0
-    #step_theta = 0.01
 
     # integration over z
 
@@ -342,7 +385,7 @@ def calculate_tau_L(E, z, phi, b, R, T, zb):
     epsmin = (mc2/erg2kev)**2/E
     epsmax = 10*kb*T
 
-    eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+    eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))	# to have an energy-grid with a constant energy step
 
     for j in range (len(z)): # integration over eps
 
@@ -364,16 +407,16 @@ def calculate_tau_L(E, z, phi, b, R, T, zb):
 
             integral_theta[l] = integration_log(theta, integral_phi)
 
-        integral_eps[j] = integration_log(eps, integral_theta) #you get d(tau)/dx
+        integral_eps[j] = integration_log(eps, integral_theta) # you get d(tau)/dx
 
-    integral = integration_log(z, integral_eps)
+    integral = integration_log(z, integral_eps) # you get tau(E)
 
     return  1/2.0 * np.pi * r0**2 * integral
 
 def elementary_luminosity(beta_gamma, delta_beta, r_gamma, L_gamma):
 
     """
-    Return the luminosity of a surface of the shock
+    Return the luminosity of a surface of the spherical shock
 
     Parameters:
         beta_gamma          : colatitude of the gamma-source (rad)

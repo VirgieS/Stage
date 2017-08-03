@@ -10,7 +10,7 @@ Parameters that we can give for this code are:
     R      : radius of the star (au)
     T      : temperature of the star (K)
 """
-# Librairies
+# Librairies and functions
 import matplotlib.pyplot as plt
 import numpy as np
 from math import *

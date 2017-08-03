@@ -11,6 +11,7 @@ MeV2eV = 1e6                # from MeV to eV
 keV2eV = 1e3                # from keV to eV
 GeV2eV = 1e9                # from GeV to eV
 TeV2eV = 1e12               # from TeV to eV
+TeV2keV = 1e9		    # from TeV to keV
 
 # Length
 

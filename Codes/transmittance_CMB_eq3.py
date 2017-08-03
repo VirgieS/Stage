@@ -1,11 +1,26 @@
-#librairies
+#librairies and functions
 import matplotlib.pyplot as plt
 import numpy as np
 from math import *
+from Physical_constants import *
+from Conversion_factors import *
+from Functions import integration_log
+from optical_depth import *
 
-# Following function gives the integrand for the integration over epsc but in unit of 1/2.0*pi*r0^2 and epsc in keV
+##=========##
+# Functions #
+##=========##
 
 def f(epsc, E, T): # eps must be given in keV/mc2 and e in keV
+
+    """
+    Return the function that we integration to obtain the transmittance
+
+    Parameters:
+	epsc 	: center-of-momentum system energy of a photon (keV/mc2)
+	E	: energy of the gamma photon (keV)
+	T	: temperature of the source (K)
+    """
 
     k = 1.380658e-23/1.602e-16 #Boltzmann's constant in keV/K
     mc2 = 510.9989461 #electron mass (keV)
@@ -27,40 +42,6 @@ def f(epsc, E, T): # eps must be given in keV/mc2 and e in keV
     log = np.log(1 - np.exp(- (epsc * mc2)**2/(E * k * T)))
     sigma = cross_section(epsc)
     return -epsc**3 * sigma * log
-
-def integration_log(x, y):
-    #Looking for a and b for y = a*x^b
-    def calculate_ab(xi, xf, yi, yf):
-        logxi = np.log(xi)
-        logxf = np.log(xf)
-        logyi = np.log(yi)
-        logyf = np.log(yf)
-        b = (logyf - logyi)/(logxf - logxi)
-        loga = logyi - b*logxi
-        a = np.exp(loga)
-        return a, b
-
-    #Calculate deltaS from deltaS = int from xi to xf a*x^b
-    def delta_S(xi, xf, yi, yf):
-        [a, b] = calculate_ab(xi, xf, yi, yf)
-        return a/(b+1)*(xf**(b+1) - xi**(b+1))
-
-    #Calculate total integral from init to final a*x^b
-    integral = 0
-    deltaS = np.zeros(len(x)-1)
-
-    #if np.all(y == 0):
-        #integral = 0 #if the function is nul all the time, the integral is nul
-
-    #else:
-
-    for i in range (1, len(x)):
-        deltaS[i-1] = delta_S(x[i-1], x[i], y[i-1], y[i])
-        integral = integral + deltaS[i-1]
-
-    integral = np.nan_to_num(integral)
-
-    return integral
 
 #For the vector eps, E
 number_bin_E = 80

@@ -36,7 +36,7 @@ beta_o = np.pi/2                                                # colatitude of 
     # Load data
 
         # Path to result directories and run ID
-path='/Users/stage/Documents/Stage/Codes/'
+path='/home/vivi/Documents/IRAP/Stage/Codes/'
 runid='Datas'
 
         # Values
@@ -52,8 +52,8 @@ beta_gamma = np.linspace(0, np.pi/2, int(np.pi/2/delta_beta))   # colatitude of 
 alpha_gamma = np.array([0, np.pi])                              # polar angle of the gamma-source (rad)
 
     # Energy of the gamma photon
-E = gamma_data.gam * MeV2erg                # in erg
-E_MeV = E/MeV2erg                           # in MeV
+E_MeV = gamma_data.gam                	    # in MeV
+E = E_MeV*MeV2erg                           # in erg
 
     # For WD
 R_WD = 0.5 * AU2cm                          # radius of WD (cm)
@@ -97,8 +97,8 @@ for j in range (len(beta_gamma)):
 
             break
 
-L_gamma_trans = L_gamma_trans * E_MeV * MeV2eV          # in erg/s
-L_gamma = L_gamma * E_MeV * MeV2eV                      # in erg/s
+L_gamma_trans = L_gamma_trans * E          # in erg/s
+L_gamma = L_gamma * E                      # in erg/s
 
 # Plotting the figure
 
@@ -114,43 +114,3 @@ plt.plot(E_MeV, L_gamma, label="without absorption")
 plt.plot(E_MeV, L_gamma_trans, label="with absorption")
 plt.legend(loc='best')
 plt.show()
-
-"""
-for i in range (len(time)):
-
-    L_gamma_trans = np.zeros_like(E)
-
-    if r_gamma[i] < R_WD :
-
-        continue
-
-    else :
-
-        theta_max_WD = np.arcsin(R_WD/r_gamma[i])
-
-    for j in range (len(beta_gamma)):
-
-        for k in range (len(alpha_gamma)):
-
-            b_WD, z_WD, condition_WD = compute_WD(beta_gamma[j], beta_o, alpha_gamma[k], alpha_o, r_gamma[i], theta_max_WD)
-            print(condition_WD)
-
-            if condition_WD :
-
-                transmittance = 0
-
-            else :
-
-                tau = calculate_tau(E, z, phi, b_WD, R_WD, T_WD, z_WD)
-                transmittance = np.exp(-tau)
-
-            # luminosity
-            L_gamma = gamma_data.spec_tot[i]
-            L_gamma_i = elementary_luminosity(beta_gamma[j], delta_beta, r_gamma[i], L_gamma)
-            L_gamma_trans += L_gamma_i * transmittance
-
-    plt.xscale('log')
-    plt.plot(E_MeV, L_gamma_trans)
-    plt.plot(E_MeV, L_gamma)
-    plt.show()
-"""
