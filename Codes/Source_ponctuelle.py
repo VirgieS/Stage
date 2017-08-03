@@ -1,138 +1,159 @@
 #Our coordinate are psi, azimutal angle from the direction of the gamma-photon and phi, polar angle around this axis.
 
-#librairies
+# Librairies
 import matplotlib.pyplot as plt
 import numpy as np
 from math import *
-from scipy.integrate import quad
+from Physical_constants import *
+from Conversion_factors import *
+from Functions import integration_log, calculate_tau
 
-def distance(beta, L, D_s, z): #distance between the gamma photon and the source IR
+##=========##
+# Functions #
+##=========##
+
+def distance(beta, L, D_s, z):
+    """
+    Return the distance betwee the gamma photon and the IR source
+
+    Parameters:
+        beta        : angle formed by the direction to the gamma source and the direction to the IR source from the observer (rad)
+        L           : lenght of the line of sight (cm)
+        D_s         : distance to the IR source from the observer (cm)
+        z           : position along the line of sight (cm)
+    """
 
     return np.sqrt((L - z)**2 + D_s**2 - 2 * (L - z) * D_s * np.cos(beta))
 
-"""
-density of the photons is not isotropic and is : dn = u/(a*T^4) * Bnu/(c*h*nu)
+def density_n(u_in, b, D, eps, T):
 
-Parameters:
+    """
+    Return the density of the photons is not isotropic and is : dn = u/(a*T^4) * Bnu/(c*h*nu)
 
-u_in is the choosen energy density of the (ponctual) star in a position along the line of sight (keV/cm^3)
-b is the impact parameter (cm)
-z is the position along the line of sight (cm)
-eps is the energy of the target-photon (keV)
-T is the temperature of the source (K)
-alpha is the right ascension (rad)
-L is the distance between us and the source of gamma (cm)
-R is the galactic radius of the source of gamma (cm)
-Rs is the galactic radius of the sun (cm)
-"""
+    Parameters:
 
-def density_n(u_in, b, d, eps, T):
+        u_in            : choosen energy density of the (ponctual) star in a position along the line of sight (erg/cm^3)
+        b               : impact parameter (cm)
+        D               : distance to the IR source from the gamma photon (cm)
+        eps             : energy of the target-photon (erg)
+        T               : temperature of the source (K)
+    """
 
-    def energy_density(u_in, b, d, T): #energy density of the source IR
+    def energy_density(u_in, b, D, T):
 
-        #Global energy
-        c = 2.99792458e+10 #light speed in cm/s
-        sb = 5.670367e-12/1.602e-16 #Stefan-Boltzmann constant (keV s^-1 cm^-2 K^-4)
-        a = 4 * sb/c #radiation constant (keV cm^-3 K^-4)
-        h = 6.6260755e-34/1.602e-16 #Planck's constant in keV*s
+        """
+        Return the dimesnionless energy density of the source IR (u = u/(asb*T^4))
 
-        def luminosity(u_in, b): #luminosity of the source IR
+        Parameters:
+            u_in            : choosen energy density of the (ponctual) star in a position along the line of sight (erg/cm^3)
+            b               : impact parameter (cm)
+            D               : distance to the IR source from the gamma photon (cm)
+            T               : temperature of the source (K)
+        """
 
-            c = 2.99792458e+10 #light speed in cm/s
+        def luminosity(u_in, b):
 
-            return u_in * c * 4 * np.pi * b**2
+            """
+            Return the luminosity of the source IR for a choosen energy density at a particular distance
 
-        Lum = luminosity(u_in, b)
+            Parameters:
+                u_in            : choosen energy density of the (ponctual) star in a position along the line of sight (erg/cm^3)
+                b               : impact parameter (cm)
+            """
 
-        return Lum/(4 * np.pi * d**2 * c) * 1.0/(a * T**4)
+            return u_in * cl * 4 * np.pi * b**2
 
-    nu = eps/h
+        Lum = luminosity(u_in, b)                               # erg/s
+
+        return Lum/(4 * np.pi * D**2 * cl) * 1.0/(asb * T**4)
+
+    nu = eps/hp
 
     def planck(nu, T):
 
-        #Global constants
-        k = 1.380658e-23/1.602e-16 #Boltzmann's constant in keV/K
-        c = 2.99792458e+10 #light speed in cm/s
+        """
+        Return the density of a Black body
 
-        return (2*h*(nu**3))/(c**2) * 1/(np.exp((h*nu)/(k*T)) - 1)
+        Parameters:
+            nu          : frequency of the target photon (Hz)
+            T           : temperature of the source (K)
+        """
+
+        return (2*hp*(nu**3))/(cl**2) * 1/(np.exp((hp*nu)/(kb*T)) - 1)
 
     Bnu = planck(nu, T)
 
-    u = energy_density(u_in, b, d, T)
+    u = energy_density(u_in, b, D, T)
 
-    return 4 * np.pi * u * Bnu/(h * c * eps)
+    return 4 * np.pi * u * Bnu/(hp * cl * eps)                  # cm^-3/sr/erg
 
-#function to integrate a function in log-log scale
-def integration_log(x, y):
+def angle(D, b, z, zb):
 
-    #Looking for a and b for y = a*x^b
-    def calculate_ab(xi, xf, yi, yf):
-        logxi = np.log(xi)
-        logxf = np.log(xf)
-        logyi = np.log(yi)
-        logyf = np.log(yf)
-        b = (logyf - logyi)/(logxf - logxi)
-        loga = logyi - b*logxi
-        a = np.exp(loga)
-        a = np.nan_to_num(a)
-        return a, b
+    """
+    Return the angle between the two momenta of the two photons in the observer's frame
 
-    #Calculate deltaS from deltaS = int from xi to xf a*x^b
-    def delta_S(xi, xf, yi, yf):
-        [a, b] = calculate_ab(xi, xf, yi, yf)
-        return a/(b+1)*(xf**(b+1) - xi**(b+1))
-
-    #Calculate total integral from init to final a*x^b
-    integral = 0
-    deltaS = 0
-
-    for i in range (1, len(x)):
-        deltaS = delta_S(x[i-1], x[i], y[i-1], y[i])
-        integral = integral + deltaS
-
-    integral = np.nan_to_num(integral)
-
-    return integral
-
-#angle (rad) between the momenta of the two photons (gamma and IR) in the observer's frame
-def angle(d, b, z, zb): #d, b, z and zb must be given in cm
+    Parameters:
+        D               : distance to the IR source from the gamma photon (cm)
+        b               : impact parameter (cm)
+        z               : position along the line of sight (cm)
+        zb              : position along the line of sight closely the source (cm)
+    """
 
     if z <zb:
-        theta = np.pi - np.arcsin(b*1.0/d)
+        theta = np.pi - np.arcsin(b*1.0/D)
 
     else:
-        theta = np.arcsin(b*1.0/d)
+        theta = np.arcsin(b*1.0/D)
 
     return theta
 
-"""
-function for integration
+def f(u_in, b, D, eps, T, z, zb, E):
 
-Parameters:
-u_in is the choosen energy density of the (ponctual) star in a position along the line of sight (keV/cm^3)
-b is the impact parameter (cm)
-d is the distance between the gamma-photon and the source IR (cm)
-eps is the energy of the target-photon (keV)
-T is the temperature of the source (K)
-z is the position along the line of sight (cm)
-E is the energy of the gamma-photon (keV)
-"""
+    """
+    Return the function for integration to compute the optical depth
 
-def f(u_in, b, d, eps, T, z, zb, E):
+    Parameters:
+        u_in            : choosen energy density of the (ponctual) star in a position along the line of sight (erg/cm^3)
+        b               : impact parameter (cm)
+        D               : distance between the gamma-photon and the source IR (cm)
+        eps             : energy of the target-photon (keV)
+        T               : temperature of the source (K)
+        z               : position along the line of sight (cm)
+        zb              : position along the line of sight closely the source (cm)
+        E               : energy of the gamma-photon (erg
+    """
 
-    mc2 = 510.9989461 #electron mass (keV)
+    theta = angle(D, b, z, zb)
 
-    theta = angle(d, b, z, zb)
+    epsc = np.sqrt(eps * E/2 * (1 - np.cos(theta)))/(mc2/erg2kev) #it gives epsc in erg/(mc2 in erg)
 
-    epsc = np.sqrt(eps * E/2 * (1 - np.cos(theta)))/mc2 #it gives epsc in keV/mc2
+    def cross_section(epsc):
+        """
+    	Return the dimensionless cross section of the interaction gamma-gamma (formula 1 of Gould's article)
 
-    def cross_section(epsc): #sigma_int  = 1/2.0 * pi * r0**2 * sigma (equation 1 of Gould's article), we calculate sigma and not sigma_int
+    	Parameter:
+    	    epsc	: center-of-momentum system energy of a photon
+    	"""
 
         def parameter_s(epsc):
+
+            """
+    	    Return the parameter s (formula 3 of Gould's article)
+
+    	    Parameter:
+    	        epsc	: center-of-momentum system energy of a photon
+    	    """
 
             return epsc**2
 
         def parameter_beta(epsc):
+
+            """
+    	    Return the parameter beta (formula 4 of Gould's article)
+
+    	    Parameter:
+    	        epsc	: center-of-momentum system energy of a photon
+    	    """
 
             s = parameter_s(epsc)
             return np.sqrt(1 - 1/s)
@@ -142,15 +163,25 @@ def f(u_in, b, d, eps, T, z, zb, E):
 
         return (1 - beta**2) * ((3 - beta**4) * np.log((1 + beta)/(1 - beta)) - 2 * beta * (2 - beta**2))
 
-    dn = density_n(u_in, b, d, eps, T)
-    sigma = cross_section(epsc)
+    dn = density_n(u_in, b, D, eps, T)          # differential density of target photons (cm^-3/sr/erg)
+    sigma = cross_section(epsc)                 # dimensionless cross section of the interaction gamma-gamma
+
     return dn * sigma * (1 - np.cos(theta))
 
-def calculate_tau(E, u_in, b, d, T, z, zb):
+def calculate_tau(E, u_in, b, D, T, z, zb):
 
-    #Global constants
-    k = 1.380658e-23/1.602e-16 #Boltzmann's constant in keV/K
-    r0 =  2.818e-13 #classical electron radius (cm)
+    """
+    Return the optical depth for a dimensionless source
+
+    Parameters:
+        E               : energy of the gamma photon (erg)
+        u_in            : choosen energy density of the (ponctual) star in a position along the line of sight (erg/cm^3)
+        b               : impact parameter (cm)
+        D               : distance between the gamma-photon and the source IR (cm)
+        T               : temperature of the source (K)
+        z               : position along the line of sight (cm)
+        zb              : position along the line of sight closely the source (cm)
+    """
 
     integral = np.zeros_like(E)
 
@@ -158,9 +189,12 @@ def calculate_tau(E, u_in, b, d, T, z, zb):
 
         integral_eps = np.zeros_like(z)
 
+        # for the vector eps
+        number_bin_eps = 20.0
+
         #energy of the target-photon
-        epsmin = mc2**2/E[i]
-        epsmax = 10*k*T
+        epsmin = (mc2/erg2kev)**2/E[i]
+        epsmax = 10*kb*T
 
         #Because epsmin must be lower than epsmax
         if epsmin > epsmax:
@@ -170,70 +204,59 @@ def calculate_tau(E, u_in, b, d, T, z, zb):
 
         for j in range(len(z)):
 
-            integrand = f(u_in, b, d[j], eps, T, z[j], zb, E[i])
+            integrand = f(u_in, b, D[j], eps, T, z[j], zb, E[i])
             integrand = np.nan_to_num(integrand)
 
-            idx=(integrand > 0.0)
+            integral_eps[j] = integration_log(eps, integrand)
 
-            #Because the function integral_log works only if there is more than two elements not zero
-            if sum(idx) > 2:
-                integral_eps[j] = integration_log(eps[idx], integrand[idx])
+        integral[i] = integration_log(z, integral_eps)
 
-        #Because the function integral_log works only if there is more than two elements not zero
-        idy=(integral_eps > 0.0)
-        if sum(idy) > 2:
-            integral[i] = integration_log(z[idy], integral_eps[idy])
+    return 1/2.0 * np.pi * r0**2 * integral
 
-    return  1/2.0 * np.pi * r0**2 * integral
+if __name__ == '__main__':
 
-#Global constants
-r0 =  2.818e-13 #classical electron radius (cm)
-k = 1.380658e-23/1.602e-16 #Boltzmann's constant in keV/K
-h = 6.6260755e-34/1.602e-16 #Planck's constant in keV*s
-c = 2.99792458e+10 #light speed in cm/s
-mc2 = 510.9989461 #electron mass (keV)
+    # For the vector eps, E
+    number_bin_E = 80
 
-#For the vector eps, E
-number_bin_E = 80
-number_bin_eps = 40.0
+    # Distance to the source
+    D_gamma = np.array([2, 10, 20]) *  kpc2cm               # distance between the gamma-source and the IR source (cm)
+    D_s = 12 * kpc2cm                                       # distance between us and the IR source (cm)
+    L = 10 * kpc2cm                                         # distance between us and the gamma-source (cm)
 
-#Distance to the source
-D_gamma = np.array([4, 10, 20]) *  3.085678e21#distance between the gamma-source and the IR source (cm)
-D_s = 8.5 * 3.085678e21 #distance between us and the IR source (cm)
-L = 12 * 3.085678e21 #distance between us and the gamma-source (cm)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
 
-for k in range (len(D_gamma)):
+    for k in range (len(D_gamma)):
 
-    beta = np.arccos((L**2 + D_s**2 - D_gamma[k]**2)/(2 * D_s * L))
+        beta = np.arccos((L**2 + D_s**2 - D_gamma[k]**2)/(2 * D_s * L))
 
-    b = D_s * np.sin(beta) #impact parameter (cm)
-    z = np.linspace(0, L, 100) #position along the line of sight (cm)
-    zb = np.sqrt(D_gamma[k]**2 - b**2) #position along the line of sight closely the source IR (cm)
-    d = distance(beta, L, D_s, z)
+        b = D_s * np.sin(beta)                              # impact parameter (cm)
+        z = np.linspace(0, L, 100)                          # position along the line of sight (cm)
+        zb = np.sqrt(D_gamma[k]**2 - b**2)                  # position along the line of sight closely the source IR (cm)
+        D = distance(beta, L, D_s, z)
 
-    #Parameters
-    T = 25 #temperature of the CMB (K)
-    u_in = 1e-3 #energy density at the impact parameter (keV/cm^3)
+        # Parameters
+        T = 20                                              # temperature of the source (K)
+        u_in = 1e-3/erg2kev                                 # energy density at the impact parameter (keV/cm^3)
 
+        # Energy of the gamma-photon
+        Emin = 1e-1 * TeV2keV/erg2kev                       # we choose Emin = 10^-1 TeV (erg)
+        Emax = 1e5 * TeV2keV/erg2kev                        # we choose Emax = 10^5 TeV (erg)
+        E = np.logspace(log10(Emin), log10(Emax), number_bin_E) # erg
+        E_tev = E/(TeV2keV/erg2kev)                           # TeV
 
-    #energy of the gamma-photon
-    Emin = 1e8 #we choose Emin = 10^-1 TeV (keV)
-    Emax = 1e14 #we choose Emax = 10^5 TeV (keV)
-    E = np.logspace(log10(Emin), log10(Emax), number_bin_E) # keV
-    E_tev = E*1e-9 #TeV
+        tau = calculate_tau(E, u_in, b, D, T, z, zb)
+        Dgamma_kpc = D_gamma[k]/kpc2cm                          # kpc
 
-    tau = calculate_tau(E, u_in, b, d, T, z, zb)
-    Dgamma_kpc = D_gamma[k]/3.085678e21 #in kpc
+        plt.plot(E_tev, np.exp(-tau), label = "D$_\gamma$ = %.2f kpc" %Dgamma_kpc)
 
-    plt.plot(E_tev, np.exp(-tau), label = "D$_\gamma$ = %.2f kpc" %Dgamma_kpc)
+    Ds_kpc = D_s/kpc2cm                                         # kpc
+    L_kpc = L/kpc2cm                                            # kpc
 
-Ds_kpc = D_s/3.085678e21 #in kpc
-L_kpc = L/3.085678e21 #in kpc
-
-plt.xscale('log')
-plt.xlabel(r'$E_\gamma$' '(TeV)')
-plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
-plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with IR photons of a ponctual source at %.2f K' %T)
-plt.text(100, 1,'D$_s$ = %.2f kpc, L = %.2f kpc' %(Ds_kpc, L_kpc))
-plt.legend()
-plt.show()
+    plt.xscale('log')
+    plt.xlabel(r'$E_\gamma$' '(TeV)')
+    plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
+    plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with IR photons of a ponctual source at %.2f K' %T)
+    plt.text(0.80, 0.5,'D$_s$ = %.2f kpc,\nL = %.2f kpc' %(Ds_kpc, L_kpc), horizontalalignment='left', verticalalignment='center', transform = ax.transAxes)
+    plt.legend(loc='best')
+    plt.show()

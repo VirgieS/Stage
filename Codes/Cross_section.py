@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
         E_gev = E[i]/GeV2eV             # in GeV
         plt.title('Cross section for the first photon at %d GeV' %E_gev)
-        plt.xlabel(r'$\theta$''(rad)')
+        plt.xlabel(r'$\alpha$''(rad)')
         plt.ylabel(r'$\sigma_{\gamma, \gamma}$''(cm' r'$^2$'')')
         plt.xlim(0,np.pi)
         plt.legend(loc='best')

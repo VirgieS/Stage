@@ -57,13 +57,17 @@ def cross_section(Ee):
 if __name__ == '__main__':
 
     # Electron (positron) total energy in the CM frame (eV)
-    Ee = np.linspace(mc2*keV2eV, 1e7, 10000)
+    E_min = mc2*keV2eV
+    E_max = 100*E_min
+    Ee = np.linspace(E_min, E_max, 10000)
 
     # Computation of the cross section (cm)
     sigma, ind = cross_section(Ee)
 
     # Plot of the cross section follow the total energy in the CM frame
     Ee = Ee[ind[0]]/MeV2eV                  # MeV
+
+    plt.xscale('log')
 
     plt.plot(Ee, sigma)
     plt.title('Cross section for different energy in the CM frame')

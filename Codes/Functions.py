@@ -200,7 +200,7 @@ def density_n(eps, T, theta):
 
     Bnu = planck(nu, T)
 
-    return Bnu/(cl * hp**2 * nu) * np.cos(theta) #return dn in cm^3/sr/erg
+    return Bnu/(cl * hp**2 * nu) * np.cos(theta) #return dn in cm^-3/sr/erg
 
 def gamma(X, Z):
 
@@ -289,7 +289,7 @@ def f(theta, phi, eps, z, D, b, R, E, T, zb):
 
         return (1 - beta**2) * ((3 - beta**4) * np.log((1 + beta)/(1 - beta)) - 2 * beta * (2 - beta**2))
 
-    dn = density_n(eps, T, theta)	# differential density of target photons (cm^3/sr/erg)
+    dn = density_n(eps, T, theta)	# differential density of target photons (cm^-3/sr/erg)
     sigma = cross_section(epsc)		# dimensionless cross section of the interaction gamma-gamma
 
     return dn * sigma * (1 - cos_alpha) * np.sin(theta)
@@ -413,7 +413,7 @@ def calculate_tau_L(E, z, phi, b, R, T, zb):
 
     return  1/2.0 * np.pi * r0**2 * integral
 
-def elementary_luminosity(beta_gamma, delta_beta, r_gamma, L_gamma):
+def elementary_luminosity(beta_gamma, delta_beta):
 
     """
     Return the luminosity of a surface of the spherical shock
@@ -427,7 +427,7 @@ def elementary_luminosity(beta_gamma, delta_beta, r_gamma, L_gamma):
 
     beta_min = beta_gamma
     beta_max = beta_gamma + delta_beta
-    dS = 2*np.pi*r_gamma**2*(np.cos(beta_min) - np.cos(beta_max))
-    S = 4*np.pi*r_gamma**2
+    d_Omega = 2*np.pi*(np.cos(theta_min) - np.cos(theta_max))
+    Omega = 4*np.pi
 
-    return L_gamma * dS/S
+    return d_Omega/Omega

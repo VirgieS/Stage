@@ -36,7 +36,7 @@ beta_o = np.pi/2                                                # colatitude of 
     # Load data
 
         # Path to result directories and run ID
-path='/home/vivi/Documents/IRAP/Stage/Codes/'
+path='/Users/stage/Documents/Stage/Codes/' #'/home/vivi/Documents/IRAP/Stage/Codes/'
 runid='Datas'
 
         # Values
@@ -76,7 +76,7 @@ for j in range (len(beta_gamma)):
 
     for k in range (len(alpha_gamma)):
 
-        b_WD, z_WD, condition_WD = compute_WD(beta_gamma[j], beta_o, alpha_gamma[k], alpha_o, r_gamma[100], theta_max_WD)
+        b_WD, z_WD, condition_WD = compute_WD(beta_gamma[j], beta_o, alpha_gamma[k], alpha_o, r_gamma[50], theta_max_WD)
 
         # if eclipse, then transmittance is nul else transmittance can be computed
         if condition_WD :
@@ -89,16 +89,18 @@ for j in range (len(beta_gamma)):
             transmittance = np.exp(-tau)
 
         # luminosity
-        L_gamma = gamma_data.spec_tot[50]                                                   # total luminosity of the shock (without absorption) (erg/s/eV)
-        L_gamma_i = elementary_luminosity(beta_gamma[j], delta_beta, r_gamma[50], L_gamma)  # luminosity of the surface dS (without absorption)  (erg/s/eV)
-        L_gamma_trans += L_gamma_i * transmittance                                          # total luminosity of the shock (with absorption)    (erg/s/eV)
+        Lum_gamma = gamma_data.spec_tot[50]                                                     # total luminosity of the shock (without absorption) (erg/s/eV)
+        Lum_gamma_i = elementary_luminosity(beta_gamma[j], delta_beta)*Lum_gamma                      # luminosity of the surface dS (without absorption)  (erg/s/eV)
+        transmittance = 1
+        Lum_gamma_trans += Lum_gamma_i * transmittance                                          # total luminosity of the shock (with absorption)    (erg/s/eV)
 
-        if beta_gamma[j] == 0:
+        if beta == 0:
 
             break
 
-L_gamma_trans = L_gamma_trans * E          # in erg/s
-L_gamma = L_gamma * E                      # in erg/s
+E_ev = E * MeV2eV
+Lum_gamma_trans = L_gamma_trans * E_ev              # in erg/s
+Lum_gamma = Lum_gamma * E_ev                        # in erg/s
 
 # Plotting the figure
 
@@ -110,7 +112,7 @@ plt.xscale('log')
 plt.title('Gamma emission of a classical nova')
 plt.xlabel(r'$E_\gamma$' ' (MeV)')
 plt.ylabel(r'$L_\gamma$'' (E) (erg/s)')
-plt.plot(E_MeV, L_gamma, label="without absorption")
-plt.plot(E_MeV, L_gamma_trans, label="with absorption")
+plt.plot(E_MeV, Lum_gamma, label="without absorption")
+plt.plot(E_MeV, Lum_gamma_trans, label="with absorption")
 plt.legend(loc='best')
 plt.show()

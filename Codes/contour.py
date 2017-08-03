@@ -16,24 +16,24 @@ beta_o = np.pi/2                    # colatitude of the observator (rad)
     # WD is at (0,0) and RG at (16,0)
 #delta = 0.5                         # step for each position in X and Z (au)
 
-xmin = -10.0                        # in au
-xmax = 30.0                         # in au
+xmin = -10.0                        # au
+xmax = 10.0                         # au
 
-zmin = 0.0                          # in au
-zmax = 40.0                         # in au
+zmin = 0.0                          # au
+zmax = 20.0                         # au
 
-delta = 0.5                         # in ua
+delta = 1                           # ua
 
 xvec = np.linspace(xmin, xmax, int((xmax-xmin)/delta))
 zvec = np.linspace(zmin, zmax, int((zmax-zmin)/delta))
 
-xvec_cm = xvec * AU2cm              # in cm
-zvec_cm = zvec * AU2cm              # in cm
+xvec_cm = xvec * AU2cm              # cm
+zvec_cm = zvec * AU2cm              # cm
 
 X, Z = np.meshgrid(xvec, zvec)      # grid of positions of the gamma-source (au)
 
 # For WD
-R_WD = 0.5 * AU2cm                  # radius of WD (cm)
+R_WD = 100 * Rsun2cm                # radius of WD (cm)
 T_WD = 10000                        # temperature of WD (K)
 
 # For RG

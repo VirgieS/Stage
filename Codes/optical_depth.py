@@ -192,11 +192,11 @@ if __name__ == '__main__':
     D_gamma = np.sqrt(b**2 + L**2)          # distance between the star and the gamma-source (cm)
     R = 0.5 * AU2cm                         # radius of the star (express in Rsun)
     T = 10000                               # temperature of the star (K)
-    z = np.linspace(0, L, 100)              # position along the line of sight (cm)
+    z = np.linspace(0, L, 1000)              # position along the line of sight (cm)
     phi = np.linspace(0, 2*np.pi, 10)       # angle polar
 
         # Energy of the gamma-photon
-    E = 1e9                                 # keV
+    E = 100e9                                 # keV
     E_tev = E*keV2eV/TeV2eV                 # TeV
 
 

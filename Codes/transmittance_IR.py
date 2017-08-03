@@ -15,7 +15,7 @@ from optical_depth import *
 # Functions #
 ##=========##
 
-def f(psi, eps, E, T):
+def f_IR(psi, eps, E, T):
 
     """
     Return the function that we integrate to compute the optical depth
@@ -95,58 +95,59 @@ def f(psi, eps, E, T):
 
     return sigma * dn * (1 - costheta) * np.sin(psi)
 
+if __name__ == '__main__':
 
-# Global constants
-T = 25 				# temperature of the IR (K)
+    # Global constants
+    T = 25 				# temperature of the IR (K)
 
-# For the vector eps, E
-number_bin_E = 80
-number_bin_eps = 40.0
+    # For the vector eps, E
+    number_bin_E = 80
+    number_bin_eps = 40.0
 
-# Distance to the source
-R = 0 				# distance to the Galactic center of the source (kpc)
-Rs = 8.5 			# distance to the Galactic center of Sun (kpc)
-alpha_r = 0 			# right ascension of the source (radian)
-z = 0 				# height above the Galactic plane (kpc)
-L = np.sqrt(z**2 + R**2 + Rs**2 - 2*R*Rs*np.cos(alpha_r)) #distance to the source (kpc)
-L = L * kpc2cm 						  # cm
+    # Distance to the source
+    R = 0                                                   # distance to the Galactic center of the source (kpc)
+    Rs = 8.5                                                # distance to the Galactic center of Sun (kpc)
+    alpha_r = 0                                             # right ascension of the source (radian)
+    z = 0                                                   # height above the Galactic plane (kpc)
+    L = np.sqrt(z**2 + R**2 + Rs**2 - 2*R*Rs*np.cos(alpha_r)) #distance to the source (kpc)
+    L = L * kpc2cm 						                    # cm
 
-# Energy of the gamma-photon
-Emin = 1e-1*TeV2keV 			# we choose Emin = 10^-1 TeV (keV)
-Emax = 1e5*TeV2keV 			# we choose Emax = 10^5 TeV (keV)
-E = np.logspace(log10(Emin), log10(Emax), number_bin_E) # keV
-E_tev = E/TeV2keV 					#TeV
+    # Energy of the gamma-photon
+    Emin = 1e-1*TeV2keV 			                      # we choose Emin = 10^-1 TeV (keV)
+    Emax = 1e5*TeV2keV 			                          # we choose Emax = 10^5 TeV (keV)
+    E = np.logspace(log10(Emin), log10(Emax), number_bin_E)     # keV
+    E_tev = E/TeV2keV                                           # TeV
 
-integral_eps = np.zeros_like(E)
+    integral_eps = np.zeros_like(E)
 
-for i in range (len(E)):
+    for i in range (len(E)):
 
-    epsmin = mc2**2/E[i]
-    epsmax = 10*(kb*erg2kev)*T
+        epsmin = mc2**2/E[i]
+        epsmax = 10*(kb*erg2kev)*T
 
-    #Because epsmin must be lower than epsmax
-    if epsmin > epsmax:
-        continue
-    else:
-        eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
+        #Because epsmin must be lower than epsmax
+        if epsmin > epsmax:
+            continue
+        else:
+            eps = np.logspace(log10(epsmin), log10(epsmax), int(log10(epsmax/epsmin)*number_bin_eps))
 
-    integral_psi = np.zeros_like(eps)
-    psi = np.linspace(0, np.pi, 100) #azimutal angle if z is the direction of the gamma-photon
+        integral_psi = np.zeros_like(eps)
+        psi = np.linspace(0, np.pi, 100) #azimutal angle if z is the direction of the gamma-photon
 
-    for j in range (len(eps)):
+        for j in range (len(eps)):
 
-        integrand = f(psi, eps[j], E[i], T)
-        integrand = np.nan_to_num(integrand)
+            integrand = f_IR(psi, eps[j], E[i], T)
+            integrand = np.nan_to_num(integrand)
 
-       	integral_psi[j] = integration_log(psi, integrand)
+            integral_psi[j] = integration_log(psi, integrand)
 
-    integral_eps[i] = integration_log(eps, integral_psi)
+        integral_eps[i] = integration_log(eps, integral_psi)
 
-tau = 1/2.0 * np.pi * r0**2 * L * 2 * np.pi * integral_eps # the intergation in phi gives 2*pi and the integration in x gives L
+    tau = 1/2.0 * np.pi * r0**2 * L * 2 * np.pi * integral_eps # the intergation in phi gives 2*pi and the integration in x gives L
 
-plt.xscale('log')
-plt.xlabel(r'$E_\gamma$' '(TeV)')
-plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
-plt.title('Transmittance of VHE 'r'$\gamma$' '-rays in interaction with IR photons')
-plt.plot(E_tev, np.exp(-tau))
-plt.show()
+    plt.xscale('log')
+    plt.xlabel(r'$E_\gamma$' '(TeV)')
+    plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
+    plt.title('Transmittance of VHE 'r'$\gamma$' '-rays in interaction with IR photons')
+    plt.plot(E_tev, np.exp(-tau))
+    plt.show()

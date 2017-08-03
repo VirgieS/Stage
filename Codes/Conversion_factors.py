@@ -7,11 +7,12 @@ J2erg = 1e7                 # from J to erg
 erg2kev = 1/(kev2J * J2erg) # from erg to keV
 eV2erg = 1.6022e-12         # from eV to erg
 MeV2erg = 1.6022e-6         # from Mev to erg
+tev2erg = 1.6022            # from TeV to erg
 MeV2eV = 1e6                # from MeV to eV
 keV2eV = 1e3                # from keV to eV
 GeV2eV = 1e9                # from GeV to eV
 TeV2eV = 1e12               # from TeV to eV
-TeV2keV = 1e9		    # from TeV to keV
+TeV2keV = 1e9		        # from TeV to keV
 
 # Length
 
@@ -35,10 +36,10 @@ Jy2erg=1e-23                # from Jy to erg
 
 # Sun
 
-Rsun2AU=4.6491e-3           # Rsun to AU
-Rsun2cm=6.957e10            # Rsun to cm
-Lsun2erg=3.839e33           # Lsun to erg
-Msun2g=1.9891e33            # Msun to g
+Rsun2AU = 4.6491e-3         # Rsun to AU
+Rsun2cm = 6.957e10          # Rsun to cm
+Lsun2erg = 3.839e33         # Lsun to erg
+Msun2g = 1.9891e33          # Msun to g
 
 # Various
 
