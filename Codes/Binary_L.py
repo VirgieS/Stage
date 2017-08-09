@@ -26,7 +26,7 @@ from Functions import *
 # Parameters for the system
 
     # Position of the observator
-alpha_o = np.pi/4                   # polar angle of the observator (rad)
+alpha_o = np.pi/2                   # polar angle of the observator (rad)
 beta_o = np.pi/2                    # colatitude of the observator (rad)
 
     # Position of the gamma-source
@@ -49,7 +49,7 @@ d_orb = 16 * AU2cm                  # orbital separation (cm)
 
     # Integration over z
 step_z = 0.1 * AU2cm                                                       # step for z
-Lmin = 5                                                                   # choosen L_min at 10 au
+Lmin = 0.5                                                                   # choosen L_min at 10 au
 Lmax = 100                                                                 # choosen L_max at 100 au
 step_L = 0.5                                                               # step between each L-value (au)
 L = np.linspace(Lmin, Lmax, int((Lmax-Lmin)/step_L) + 1) * AU2cm           # maximum length for the integration about z (cm)
@@ -59,7 +59,7 @@ step_phi = 0.1                                                             # ste
 phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))                       # angle polar of the one source (rad)
 
 # Energy of the gamma-photon
-E = 1e10/erg2kev          	# erg
+E = 1e9/erg2kev          	# erg
 E_tev = E*erg2kev/TeV2keV    	# TeV
 
 # Calculation of the transmittance
@@ -123,5 +123,5 @@ else :
     plt.xlabel('L (au)')
     plt.ylabel(r'$\tau_{\gamma \gamma}$')
     plt.title(u'Optical depth of 'r'$\gamma$' '-rays at %.2f TeV in interaction \n with photons from a binary stellar system' %E_tev)
-    plt.legend(loc='best')
+    plt.legend(loc='lower right')
     plt.show()

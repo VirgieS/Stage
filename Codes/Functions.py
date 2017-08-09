@@ -337,7 +337,7 @@ def calculate_tau(E, z, phi, b, R, T, zb):
             integral_theta = np.zeros_like(eps)
             D = distance(zb, z[j], b)		# compute the distance to the star for one position z[j] (cm)
             theta_max = np.arcsin(R/D)		# compute theta_max for each position (rad)
-            #step_theta = 0.001
+            step_theta = 0.001
             theta = np.linspace(0, theta_max, 10) #int(theta_max/step_theta))
 
             for l in range (len(eps)): # integration over theta
@@ -357,7 +357,7 @@ def calculate_tau(E, z, phi, b, R, T, zb):
 
         integral[i] = integration_log(z, integral_eps) # you get tau
 
-    return  1/2.0 * np.pi * r0**2 * integral#, step_theta
+    return  1/2.0 * np.pi * r0**2 * integral #, step_theta
 
 def calculate_tau_L(E, z, phi, b, R, T, zb):
 
@@ -427,7 +427,7 @@ def elementary_luminosity(beta_gamma, delta_beta):
 
     beta_min = beta_gamma
     beta_max = beta_gamma + delta_beta
-    d_Omega = 2*np.pi*(np.cos(theta_min) - np.cos(theta_max))
+    d_Omega = 2*np.pi*(np.cos(beta_min) - np.cos(beta_max))
     Omega = 4*np.pi
 
     return d_Omega/Omega

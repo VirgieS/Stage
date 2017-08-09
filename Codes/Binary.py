@@ -32,25 +32,25 @@ beta_o = np.pi/2                    # colatitude of the observator (rad)
     # Position of the gamma-source
 alpha_gamma = 0                     # polar angle of the gamma-source (rad)
 beta_gamma = np.pi/2                # colatitude of the gamma-source (rad)
-r_gamma = 2 * AU2cm                  # distance to the gamma-source (cm)
-r_gamma_au = r_gamma/AU2cm           # in au
+r_gamma = 2 * AU2cm                 # distance to the gamma-source (cm)
+r_gamma_au = r_gamma/AU2cm          # in au
 
     # For WD
-R_WD = 0.5 * AU2cm                   # radius of WD (cm)
+R_WD = 0.5 * AU2cm                  # radius of WD (cm)
 T_WD = 10000                        # temperature of WD (K)
 
     # For RG
-R_RG = 0.005 * AU2cm                 # radius of RG (cm)
-T_RG = 5700                         # temperature of RG (K)
+R_RG = 2 * AU2cm                    # radius of RG (cm)
+T_RG = 3000                         # temperature of RG (K)
 
-d_orb = 0 * AU2cm                    # orbital separation (cm)
+d_orb = 16 * AU2cm                  # orbital separation (cm)
 
 # Parameters for the integration
-L = 30 * AU2cm                                           # maximum length for the integration about z (cm)
-step_z = 0.5 * AU2cm                                     # step for z (cm)
+L = 30 * AU2cm                                          # maximum length for the integration about z (cm)
+step_z = 0.5 * AU2cm                                    # step for z (cm)
 z = np.linspace(0, L, int(L/step_z))                    # position along the line of sight (cm)
 step_phi = 0.5                                          # step for phi (rad)
-phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))    # angle polar of the one source (cm)
+phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))    # angle polar of the one source (rad)
 
 # For the vector eps and E
 number_bin_E = 30
@@ -71,14 +71,15 @@ theta_max_RG = np.arcsin(R_RG/r_RG)
 [b_WD, z_WD, condition_WD] = compute_WD(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, theta_max_WD)
 [b_RG, z_RG, condition_RG] = compute_RG(beta_gamma, beta_o, alpha_gamma, alpha_o, r_gamma, d_orb, theta_max_RG)
 
+"""
 if condition_WD or condition_RG:
 
     print("There is an eclipse")
 
 else :
 
-    tau_WD, step_theta = calculate_tau(E, z, phi, b_WD, R_WD, T_WD, z_WD)
-    tau_RG = calculate_tau(E, z, phi, b_RG, R_RG, T_RG, z_RG)[0]
+    tau_WD = calculate_tau(E, z, phi, b_WD, R_WD, T_WD, z_WD)
+    tau_RG = calculate_tau(E, z, phi, b_RG, R_RG, T_RG, z_RG)
     tau_tot = tau_WD + tau_RG
 
     R_WD_au = R_WD/AU2cm     # au
@@ -87,7 +88,7 @@ else :
 
     f = plt.figure()
     ax = f.add_subplot(111)
-    plt.text(0.5, 0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au \n'r'$\delta \theta$' ' = %.3f rad' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au, step_theta), horizontalalignment='left',
+    plt.text(0.5, 0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au), horizontalalignment='left',
      verticalalignment='center', transform = ax.transAxes)
 
     plt.plot(E, np.exp(-tau_WD), '+', label = "WD")
@@ -102,3 +103,30 @@ else :
     plt.savefig('Bla.png')
 
     plt.show()
+"""
+
+tau_WD = calculate_tau(E, z, phi, b_WD, R_WD, T_WD, z_WD)
+tau_RG = calculate_tau(E, z, phi, b_RG, R_RG, T_RG, z_RG)
+tau_tot = tau_WD + tau_RG
+
+R_WD_au = R_WD/AU2cm     # au
+R_RG_au = R_RG/AU2cm     # au
+d_orb_au = d_orb/AU2cm   # au
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+plt.text(0.5, 0.5,u'T$_{WD}$ = %.2f K, R$_{WD}$ = %.2f au \nT$_{RG}$ = %.2f K, R$_{RG} =$ %.2f au \nd$_{orb}$ = %.2f au \n' r'$\alpha_o$' ' = %.2f, 'r'$\beta_o$'' = %.2f \n'r'$\alpha_\gamma$'' = %.2f, 'r'$\beta_\gamma$'' = %.2f \nr$_\gamma$ = %.2f au' %(T_WD, R_WD_au, T_RG, R_RG_au, d_orb_au, alpha_o, beta_o, alpha_gamma, beta_gamma, r_gamma_au), horizontalalignment='left',
+     verticalalignment='center', transform = ax.transAxes)
+
+plt.plot(E, np.exp(-tau_WD), '+', label = "WD")
+plt.plot(E, np.exp(-tau_RG), '--', label = "second star")
+plt.plot(E, np.exp(-tau_tot), label = "two stars")
+plt.xscale('log')
+plt.xlabel(r'$E_\gamma$' '(TeV)')
+plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
+plt.title(u'Transmittance of 'r'$\gamma$' '-rays in interaction \n in a binary stellar system')
+
+plt.legend(loc='lower right')
+#plt.savefig('Bla.png')
+
+plt.show()

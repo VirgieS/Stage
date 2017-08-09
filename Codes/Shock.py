@@ -36,7 +36,8 @@ beta_o = np.pi/2                                                # colatitude of 
     # Load data
 
         # Path to result directories and run ID
-path='/Users/stage/Documents/Stage/Codes/' #'/home/vivi/Documents/IRAP/Stage/Codes/'
+path= '/home/vivi/Documents/IRAP/Stage/Codes/'
+#path= '/Users/stage/Documents/Stage/Codes/'
 runid='Datas'
 
         # Values
@@ -47,7 +48,7 @@ time = hydro_data[0]['Time'] * day2sec      # in sec
 
     # shock coordinate
 r_gamma = hydro_data[0]['Rshock'] * AU2cm                       # in cm
-delta_beta = 0.5                                                # delta(beta) in rad
+delta_beta = 0.01                                               # delta(beta) in rad
 beta_gamma = np.linspace(0, np.pi/2, int(np.pi/2/delta_beta))   # colatitude of the gamma-source (rad)
 alpha_gamma = np.array([0, np.pi])                              # polar angle of the gamma-source (rad)
 
@@ -68,7 +69,7 @@ phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))    # angle polar of the one
 
 # Computes the transmitted luminosity
 
-L_gamma_trans = np.zeros_like(E)                        # initialization
+Lum_gamma_trans = np.zeros_like(E)                        # initialization
 
 theta_max_WD = np.arcsin(R_WD/r_gamma[100])             # for the condition of eclipse
 
@@ -88,18 +89,19 @@ for j in range (len(beta_gamma)):
             tau = calculate_tau(E, z, phi, b_WD, R_WD, T_WD, z_WD)
             transmittance = np.exp(-tau)
 
+
         # luminosity
         Lum_gamma = gamma_data.spec_tot[50]                                                     # total luminosity of the shock (without absorption) (erg/s/eV)
-        Lum_gamma_i = elementary_luminosity(beta_gamma[j], delta_beta)*Lum_gamma                      # luminosity of the surface dS (without absorption)  (erg/s/eV)
-        transmittance = 1
+        Lum_gamma_i = elementary_luminosity(beta_gamma[j], delta_beta)*Lum_gamma                # luminosity of the surface dS (without absorption)  (erg/s/eV)
+        #transmittance = 1
         Lum_gamma_trans += Lum_gamma_i * transmittance                                          # total luminosity of the shock (with absorption)    (erg/s/eV)
 
-        if beta == 0:
+        if beta_gamma[j] == 0:
 
             break
 
 E_ev = E * MeV2eV
-Lum_gamma_trans = L_gamma_trans * E_ev              # in erg/s
+Lum_gamma_trans = Lum_gamma_trans * E_ev              # in erg/s
 Lum_gamma = Lum_gamma * E_ev                        # in erg/s
 
 # Plotting the figure

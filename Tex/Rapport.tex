@@ -1,0 +1,987 @@
+\documentclass[a4paper,12pt,twoside]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[top=2cm, bottom=2cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{amsmath,amsfonts,amsthm,amssymb}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{float}
+\usepackage{caption}
+%\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{hhline}
+\usepackage{gensymb}
+\usepackage{siunitx}
+\usepackage[protrusion=true,expansion=true]{microtype}	
+\usepackage{textcomp}
+\usepackage{csquotes}
+\usepackage{url}
+\usepackage{wrapfig}
+\usepackage{parskip}
+\usepackage{media9}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage{chronology}
+\usepackage{tikz}
+\usepackage{braket}
+\usepackage{appendix}
+\usepackage[final]{pdfpages}
+\usepackage[official]{eurosym}
+\usepackage{minitoc}
+\usepackage{enumitem}
+\usepackage{tikzsymbols}
+\usepackage{subfig}
+\usepackage{color}
+
+\newcommand{\HRule}[1]{\rule{\linewidth}{#1}}
+\newcommand{\nocontentsline}[3]{}
+\newcommand{\tocless}[2]{\bgroup\let\addcontentsline=\nocontentsline#1{#2}\egroup}
+
+\DeclareSIUnit\sr{sr}
+\DeclareSIUnit\kpc{kpc}
+\DeclareSIUnit\erg{erg}
+\DeclareSIUnit\rad{rad}
+
+
+\title{Modélisation de l'atténuation gamma-gamma des émissions de haute énergie}
+\author{Virginie Slagmolen}
+
+\begin{document}
+
+\thispagestyle{empty}
+\maketitle
+\tableofcontents
+\newpage
+\setcounter{page}{1}
+
+\section*{Introduction}
+
+Dans ce stage, nous allons nous concentrer sur l'atténuation des photons gamma produits par le choc lors de l'explosion d'une nova.
+
+Le processus d'atténuation qui va être étudier est celui de la création de paires ($e^+$ $e^-$) pour des photons gamma qui interagissent avec des photons issus de la naine blanche et de son compagnon, une géante rouge ou une étoile non évoluée (de la séquence principale).
+
+Le stage se décompose en plusieurs étapes:
+\begin{itemize}
+\item  Étape 1 : À partir de l'article de \textit{Gould et al.} et des expressions de la section efficace d'interaction et de la conservation de l'énergie, voir l'énergie seuil du photon gamma incident pour différentes énergies du photon cible mais aussi voir la dépendance de la section efficace en l'énergie de la centre de masse et en l'angle pour ces mêemes énergies de photons cibles.
+\item Étape 2 :  À partir de l'article de \textit{Moskalenko et al.}, reproduire l'atténuation gamma-gamma pour deux cas précis, le CMB et un rayonnement infrarouge. Dans ces deux cas, la densité de photons cibles est constante le long de la ligne de visée.
+\item Étape 3 : Reprendre l'étape 2 pour une source de photons ponctuelle hors de la ligne de visée.
+\item Étape 4 : Reprendre l'étape 2 pour une source de photons sphérique de rayon $R$, hors de la ligne de visée.
+\item Étape 5 : Ajouter de la géométrie au problème précédent en mettant la naine blanche et spn compagnon hors de la ligne de visée.
+\item Étape 6 : Combiner le calcul numérique pour la transmittance en fonction de la position de la source gamma à la luminosité obtenue par le choc dans deux cas précis : la nova classique et la nova symbiotique (\emph{V407 Cygni}).
+\end{itemize}
+\newpage
+
+
+\section{Paramètres influents de la section efficace}
+
+Dans cette section nous considérons l'interaction entre un photon gamma d'énergie $E_\gamma$ et un photon cible d'énergie $\epsilon$ dont l'angle d'interaction $\theta$ est défini comme l'angle entre les deux moments d'impulsion du photon gamma et du photon cible (cf fig.(\ref{fig: alpha})). Ainsi la collision est frontale si l'angle $\alpha$ est égal à $\pi$ et si $\alpha$ est nul, alors les deux photons se suivent et ne se rencontrent jamais.
+
+\tikzset{
+photong/.style={decorate, draw=red!50!,
+    decoration={coil,aspect=0}}
+ }
+\tikzset{
+photonc/.style={decorate, draw=red!20!,
+    decoration={coil,aspect=0}}
+ } 
+
+\begin{figure}[H]
+	\centering
+    \begin{tikzpicture}
+    	\draw[photong] (-3,0) -- (-2, 0) ;
+        \draw [red!50!, ->] (-2.1,0) -- (-2,0);
+        \draw [red!50!](-2.5,0) node[label=above:$\gamma$] {};
+        \draw[photonc] (0, -1) -- (-1, 0) ;
+        \draw [red!20!, ->] (-0.95,-0.05) -- (-1, 0);
+        \draw [red!20!](0,-0.75) node[label=above:$\gamma\prime$] {};
+        \draw [dashed] (-2, 0) -- (0, 0);
+        \draw [dashed] (-1, 0) -- (-2, 1);
+        \draw[blue,->] (-0.25,0) arc (0:135:0.75cm);
+        \draw [blue] (-1,0) node[above]{$\alpha$};
+    \end{tikzpicture}
+    \caption{Représentation de l'interaction entre un photon gamma $\gamma$ et un photon cible $\gamma\prime$ dont l'angle $\alpha$ est l'angle d'interaction tel que si $\alpha = 0$ les deux photons se poursuivent et si $\alpha = \pi$ la collision est frontale.}
+    \label{fig: alpha}
+\end{figure}
+
+Nous allons étudier les différents paramètres intervenant dans l'interaction gamma-gamma, tant l'énergie seuil du photon gamma pour une énergie de photon cible mais aussi la section efficace dans le centre de masse et dans le référentiel de l'observateur pour des couples d'énergie $E_\gamma$ et $\epsilon$.
+
+\subsection{Énergie seuil du photon incident pour un photon cible donné}\label{sec: Eth}
+
+Nous allons voir le seuil énergétique d'un photon incident sur un photon cible d'énergie connue. Cela nous permettra de voir si l'interaction avec ce photon est possible (cf fig.\ref{fig: Eth}). Pour des photons cibles de grandes longueurs d'onde (de petites énergies),  la condition de seuil implique que les photons incidents doivent avoir une plus grande énergie minimale contrairement aux photons cible de plus petites longueurs d'onde (de plus grande énergie).
+
+L'énergie seuil du photon gamma est telle qu'après l'interaction, la paire $e^+ e^-$ créée n'a pas d'énergie cinétique, l'énergie de l'électron (du positron) est celle au repos de ce dernier, i.e $E_e = m_e c^2$. Ainsi
+\begin{equation}
+	E_{th} = \frac{2 (m_e c^2)^2}{\epsilon (1 - \cos\alpha)}
+\end{equation}
+Remarquons que le minimum d'énergie seuil est atteint lorsque la collision est frontale et vaut $\dfrac{(m_e c^2)}{\epsilon}$.
+
+\begin{figure}[H]
+	\centering
+    \includegraphics[scale =0.8]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectE_th.eps}
+    \caption{Courbe des différentes énergies seuils pour des photons cibles de longueurs d'onde 
+    $\lambda = \SI{1}{\micro\m}, \SI{10}{\micro\m}, \SI{100}{\micro\m}, \SI{1000}{\micro\m}$ et pour des angles d'incidence du photon cible par rapport au photon de haute énergie ($\theta \in [0, \pi]$)}
+    \label{fig: Eth}
+\end{figure}
+
+\subsection{Énergie dans le centre de masse}\label{sec: CM}
+
+Regardons la dépendance en l'énergie dans le centre de masse de la section efficace de l'interaction gamma-gamma. La section efficace de cette interaction est donnée par \footnote{équation 1 de l'article de \emph{Gould et al.}}
+\begin{equation}
+	\sigma_{\gamma, \gamma} = \frac{1}{2}\pi r_0^2 (1 - \beta^2) \left[(3 - \beta^4) \ln \frac{1 + \beta}{1 - \beta} - 2 \beta (2 - \beta^2) \right]
+    \label{eq: cross section}
+\end{equation}
+Avec $\beta c$ la vitesse de l'électron (positron) dans le système du centre de masse et $r_0 = e^2/m_e c^2$ le rayon classique de l'électron \footnote{L'expresssion de $r_0$ est donnée en unité cgs ainsi $e^2 = e^2/(4 \pi \epsilon_0)$}.
+
+Constatons que la section efficace présente un maximum très piqué aux alentours de \SI{1}{\MeV} (cf fig.\ref{sigma CM}). Aux alentours de cette valeur, l'interaction gamma - gamma sera la plus efficace pour la création de paire $e^+ - e^-$. Grâce à cette constatation nous pourrons interpréter les résultats suivants.
+
+
+\begin{figure}[H]
+	\centering
+    \includegraphics[scale=0.8]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectCross_section_CM.eps}
+    \caption{Dépendance en l'énergie dans le centre de masse de la section efficace d'interaction}
+    \label{sigma CM}
+\end{figure}
+
+\subsection{Angle entre les deux moments impulsionnels des photons}
+
+Regardons la dépendance en l'angle $\alpha$, angle défini comme dans la figure (\ref{fig: alpha}), de la section efficace en considérant différents couples d'énergie (photon cible - photon incident) permettant la création de paires, ces énergies sont récapitulées au tableau (\ref{tab: energies}).
+
+\begin{table}[H]
+	\centering
+    \begin{tabular}{|c|c|}
+    	\hline
+      		Energie du photon incident & Longueur d'onde du photon cible\\
+		\hline
+       		\SI{1}{\GeV} & \SI{1}{\micro\m}\\
+            \SI{100}{\GeV} & \SI{10}{\micro\m}\\
+            \SI{1}{\TeV} & \SI{100}{\micro\m}\\
+        	\SI{10}{\TeV} & \SI{1000}{\micro\m}\\
+         \hline
+    \end{tabular}
+    \caption{Récapitulatif des différentes énergies pour le photon incident et le photon cible}
+    \label{tab: energies}
+\end{table}
+Certains couples ne permettront pas d'atteindre la condition seuil quelque soit l'angle $\alpha$ et il n'y a alors pas de création de paires et le photon gamma n'est pas absorbé par ce processus. Pour d'autres couples, deux caractères se dégagent : soit la section efficace est très piquée soit elle possède un plateau. Ces deux comportements s'explique par la figure (\ref{sigma CM}) de la section \ref{sec: CM}. En effet, la géométrie du problème permet dans certains cas de satisfaire la condition de seuil sur une gamme d'angle plus étendue alors que pour d'autre géométrie la gamme est plus piquée. Deux exemples sont visibles aux figures (\ref{1TeV}) et (\ref{10TeV}).
+
+\begin{figure}[H]
+	\centering
+    \includegraphics[scale=0.8]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectCross_section_for_1TeV.eps}
+    \caption{Courbe de la section efficace en fonction de l'angle $\theta$ pour une énergie du photon incident de \SI{1}{\TeV} et quatre énergies différentes du photon cible (\SI{1}{\micro\m}, \SI{10}{\micro\m}, \SI{100}{\micro\m} et \SI{1000}{\micro\m})}
+    \label{1TeV}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+    \includegraphics[scale=0.8]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectCross_section_for_10TeV.eps}
+    \caption{Courbe de la section efficace en fonction de l'angle $\theta$ pour une énergie du photon incident de \SI{10}{\TeV} et quatre énergies différentes du photon cible (\SI{1}{\micro\m}, \SI{10}{\micro\m}, \SI{100}{\micro\m} et \SI{1000}{\micro\m})}
+    \label{10TeV}
+\end{figure}
+
+Seuls les couples $E_\gamma = \SI{1}{\TeV}$ et $\lambda = \SI{1}{\micro\m}$ ainsi que $E_\gamma = \SI{10}{\TeV}$ et $\lambda = 1$ et \SI{10}{\micro\m} satisfont la condition de seuil et permettent la création de paires. Alors que les autres couples photon incident - photon cible ne remplissent pas la condition de seuil et il n'y a pas de création de paires. Remarquons cependant que l'angle seuil dépend des énergies en jeu. Plus énergétique sera le photon gamma, plus petit sera l'angle seuil. De plus, plus le photon cible sera de grande énergie, pour une même énergie de photon gamma, plus piquée sera la section efficace.
+
+\section{Modélisation de l'atténuation gamma-gamma dans le cas isotrope}
+
+La profondeur optique (\textit{optical depth}) de l'interaction gamma-gamma peut s'écrire de manière générale comme l'intégration le long de la ligne de visée, sur une certaine gamme d'énergie et sur l'angle solide contenant les photons cibles d'une certaine quantité pour une énergie $E$ du photon gamma incident définie par
+
+\begin{equation}
+	\frac{d n(\epsilon, \omega, z)}{d \epsilon d \omega} \sigma_{\gamma \gamma}(\epsilon_c) (1 - \cos \alpha)
+    \label{eq: integrante}
+\end{equation}
+où $\dfrac{d n(\epsilon, \Omega, \textbf{x})}{d \epsilon d \Omega}$ est la densité de photons cibles par énergie (photons/\si{\cm^3}/\si{\sr}/\si{\keV}) et angle solide à une certaine position $z$, $\epsilon$ est l'énergie des photons cibles, $\omega$ est un angle solide,  $\sigma_{\gamma \gamma}$ est la section efficace de la création de paires (cf eq.(\ref{eq: cross section})), $\epsilon_c = [\dfrac{1}{2} \epsilon E (1 - \cos\alpha)]$ est l'énergie du photon cible dans le référentiel du centre de masse, $\alpha$ est l'angle formé des deux quantités de mouvement dans le référentiel de l'observateur (cf fig.\ref{fig: alpha}) et $z$ est la coordonnée le long de la ligne de visée.
+
+Pour résoudre cette intégrale il est nécessaire de définir un système de coordonnées simples. Nous considérons les angles $\psi$ et $\phi$ définis comme à la figure (\ref{fig: coordonnee psi et phi}).
+
+\tikzset{
+photon/.style={decorate, draw=black,
+    decoration={coil,aspect=0}}
+ }
+
+\begin{figure}[H]
+	\centering
+    \begin{tikzpicture}
+        \draw (-5.75,0) node[right]{S$_\gamma$};
+        \draw (5.75, 0) node[left]{O};
+        \draw [->] (-5,0) -- (5,0) node[above]{z};
+        \draw[photon] (-4.5,0) -- (-3.5, 0) ;
+        \draw (-4,0) node[label=above:$\gamma$] {};
+        \draw [-]  (0, 0) -- (1, 1);
+        \draw[blue,->] (1,0) arc (0:45:1cm);
+        \draw [blue](1.25, 0.1) node[above]{$\psi$};
+        \draw [red, ->] (0,0) ellipse (0.5cm and 1cm);
+        \draw [red] [->] (0.5, 0) -- (0.5, 0.15)node[right] {$\phi$};
+    \end{tikzpicture}
+    \caption{Coordonnées choisis pour le calcul de l'intégrale, $z$ est le long de la ligne de visée, $\psi$ est l'angle azimutal (si $\psi$ est nul, la collision est frontale et si $\psi$ vaut $\pi$ les deux photons sont dans la même direction et le même sens) et $\phi$ est l'angle polar autour de la ligne de visée. $S$ est la source et $O$ l'observateur.}
+    \label{fig: coordonnee psi et phi}
+\end{figure}
+
+Une fois le choix des coordonnées nous pouvons intégrer la quantité (\ref{eq: integrante}), ce qui nous donne la profondeur optique
+\begin{equation}
+	\tau_{\gamma \gamma}(E) = \int_{L} d z \int d \epsilon \int d \Omega \frac{d n(\epsilon, \omega, z)}{d \epsilon d \omega} \sigma_{\gamma \gamma}(\epsilon_c) (1 - \cos \alpha)
+\end{equation}
+\label{eq: tau}
+où $d \Omega = d \cos\psi d \phi$. $L$ est la distance parcourue par le photon gamma depuis la source d'émission à l'observateur.
+
+Dans ce système de coordonnées, l'angle $\alpha$ se calcule simplement, $\alpha = \pi - \psi$.
+
+Maintenant que le système de coordonnées est défini, nous pouvons intégrer numériquement l'intégrale (\ref{eq: tau}). Nous définissons la transmittance par $\exp(-\tau_{\gamma \gamma})$.
+
+Dans les deux cas que nous allons traiter le cas où la source de gamma se trouve aux coordonnées galactiques suivants $(R, \alpha_r, z) = (\SI{0}{\kpc}, \SI{0}{\degree}, \SI{0}{\kpc})$. La distance $L$ parcourue par le photon gamma depuis la source jusqu'à nous est donnée par
+\begin{align*}
+	\rho^2 &= R^2 + R^2_s - 2 R R_s \cos\alpha_r \\
+    L^2 &= z^2 + \rho^2
+\end{align*}
+où $R$ est le rayon galactique dans le plan galactique de la source, $z$ est la hauteur de la source au-dessus du plan galactique et $R_s$ est le rayon galactique du Soleil (\SI{8.5}{\kpc}).
+
+\subsection{Transmittance  pour le CMB}
+
+Si les photons cibles sont ceux du CMB, la densité de photon est isotrope et l'intégrale (\ref{eq: tau}) se simplifie. Les quantités sont constantes le long de la ligne de visée et la densité ne dépend plus que de l'énergie des photons cibles et est donnée par la distribution de Planck.
+
+\begin{equation}
+	\frac{d n(\epsilon, \omega, z)}{d \epsilon d \omega} = \frac{2 \epsilon^2}{(h c)^3}\frac{1}{\exp\left(\frac{\epsilon}{kT}\right) - 1}
+    \label{eq: density BB}
+\end{equation}
+En injectant cette expression dans celle de l'intégrale (\ref{eq: tau}) et en simplifiant, l'intégrale devient
+\begin{equation}
+	\tau_{\gamma \gamma}^{CMB}(E) = - \frac{4kT}{(\hbar c)^3 \pi^2 E^2} L \int_{m_e c^2}^\infty d \epsilon_c \epsilon_c^3 \sigma_{\gamma \gamma}(\epsilon_c) \ln(1 - e^{-\epsilon_c^2/EkT})
+    \label{eq: CMB}
+\end{equation}
+où $kT$ est la température du CMB et $m_e c^2$ est la masse au repos de l'électron (positron).
+
+Les figures suivantes (\ref{fig: CMB eq1}) et (\ref{fig: CMB eq3}) nous montrent la transmittance de photons gamma incidents d'une énergie comprise entre $10^{-1}$ et $10^5$ \si{\TeV}. Nous pouvons remarquer que la transmittance a un minimum aux alentours de $10^{-3}$\si{\TeV} et vaut l'unité, tout est transmis pour les autres énergies. Les figures (\ref{fig: CMB}) nous montrent la cohérence entre les deux méthodes, celle basée sur la formule générale de la profondeur optique (cf eq.(\ref{eq: tau}) et celle dans le cas particulier d'un corps noir (cf eq.(\ref{eq: CMB})), du calcul de $\tau_{\gamma \gamma}$. Cependant, une différence à noter entre les deux méthodes est l'influence du binnning sur le vecteur énergie du photons cibles. En effet, plus il est grand meilleure est la concordance des deux méthodes. Remarquons tout de même que pour un petit binning (cf fig.\ref{fig: CMB 20}), la deuxième méthode présente un minimum légèrement décalé et moins profond que la première méthode. Ce qui n'est plus le cas pour un binning plus grand (cf fig.(\ref{fig: CMB 40}) et fig.(\ref{fig: CMB 60})).
+
+\begin{figure}
+	\centering
+    \subfloat [Calcul par l'équation (\ref{eq: tau}) \label{fig: CMB eq1}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correcttransmittance_CMB_eq1.eps}}\hfill
+	\subfloat [Calcul par l'équation (\ref{eq: CMB}) \label{fig: CMB eq3}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correcttransmittance_CMB_eq3.eps}}\hfill
+    \caption{Transmittance de photons gamma à des énergies entre $10^{-1}$ et $10^5$ \si{\TeV} traversant un champ de photons CMB. Le calcul de cette transmittance a été fait pour la figure (a) sur base de l'équation (\ref{eq: tau}), pour la figure (b) sur base de l'équation (\ref{eq: CMB}) avec une densité de corps noir (cf eq.\ref{eq: density BB}) à la température de \SI{2.7}{\K}.}
+    \label{fig: 20K}
+\end{figure}
+
+\begin{figure}
+	\centering
+    \subfloat [binning de 20 pour $\epsilon_c$ et $\epsilon$ \label{fig: CMB 20}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correcttransmittance_CMB_20.eps}}\hfill
+    \subfloat [binning de 40 pour $\epsilon_c$ et $\epsilon$\label{fig: CMB 40}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correcttransmittance_CMB_40.eps}}\hfill
+    \subfloat [binning de 60 pour $\epsilon_c$ et $\epsilon$\label{fig: CMB 60}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correcttransmittance_CMB_60.eps}}\hfill
+    \caption{Comparaison des deux méthodes pour trouver la profondeur optique dans le cas du CMB pour différents binnings en énergie : (a) binning de 20, (b) binning de 40 et (c) binning de 60.}
+    \label{fig: CMB}
+\end{figure}
+
+\subsection{Transmittance pour un rayonnement infrarouge isotrope}
+
+Nous allons nous concentrer sur un cas de corps gris, la densité de photon de ce corps est diluée d'un facteur $\dfrac{u}{a T^4}$ où $u$ est la densité d'énergie du corps, $a$ est la constante de radiation et $T$ est la température du corps.
+\begin{equation}
+	\frac{d n(\epsilon, \omega, z)}{d \epsilon d \omega} = \frac{2 \epsilon^2}{(h c)^3}\frac{1}{\exp\left(\frac{\epsilon}{kT}\right) - 1} \frac{u}{a T^4}
+    \label{eq: IR}
+\end{equation}
+
+Grâce à l'expression de la densité de photon de ce corps gris (cf eq.(\ref{eq: IR})) et l'expression générale de la profondeur optique (cf eq.\ref{eq: tau})), la figure (\ref{fig: IR}) représente la transmittance pour un corps gris infrarouge à une température de \SI{25}{\K} et une densité d'énergie de \SI{1}{\eV/\cm^3}.
+
+\begin{figure}
+	\centering
+    \includegraphics[scale=0.7]{/home/vivi/Documents/IRAP/Stage/Graphe/Correcttransmittance_IR.eps}
+    \caption{Transmittance de photons gamma à des énergies entre $10^{-1}$ et $10^5$ \si{\TeV} traversant un champ de photons IR à une température de \SI{25}{\K} et une densité d'énergie de \SI{1}{\eV/\cm^3}.}
+    \label{fig: IR}
+\end{figure}
+
+La figure (\ref{fig: comparaison}) nous montre la comparaison entre l'atténuation due aux photons du CMB et celle due aux photons infrarouges. La transmittance due aux premiers photons débute sa décroissance aux alentours de \SI{200}{\TeV} et a un minimum aux alentours de \SI{2000}{\TeV} pour une transmittance d'environs de 3$\%$ au minimum alors que celle due aux second photons débute aux alentours de \SI{10}{\TeV} et a un minimum aux alentours de \SI{100}{\TeV} pour une transmittance d'environs de 6$\%$ au minimum.
+
+\begin{figure}[H]
+	\centering
+    \includegraphics[scale=0.7]{/home/vivi/Documents/IRAP/Stage/Graphe/Correcttransmittance_IR_CMB.eps}
+    \caption{Comparaison des transmittances de photons gamma à des énergies entre $10^{-1}$ et $10^5$ \si{\TeV} traversant un champ de photons IR à une température de \SI{25}{\K} et une densité d'énergie de \SI{1}{\eV/\cm^3} et un champ de photon CMB.}
+    \label{fig: comparaison}
+\end{figure}
+\newpage
+
+\section{Modélisation de l'atténuation gamma-gamma dans le cas anisotrope}
+
+Dans cette section, la (ou les) source(s) de photons cibles se trouve(nt) en une position donnée et la densité de photons cibles n'est plus constante le long de la ligne de visée.
+
+\subsection{Transmittance pour une source ponctuelle}
+
+Soit une source ponctuelle située à une distance $b$, le paramètre d'impact, de la ligne de visée. La géométrie du système étudié est représenté à la figure suivante (\ref{fig: source ponctuelle})où les paramètres indépendants sont la distance à la source gamma (la longueur de la ligne de visée, $L$), la distance à la source de photons cibles ($D_s$) et le paramètre d'impact ($b$).
+
+\begin{figure}[H]
+	\centering
+    \begin{tikzpicture}
+        \draw (-5.5,0) node[left]{S$_\gamma$};
+        \draw (5.5, 0) node[right]{O};
+        \draw [dashed] (-5,0) -- (5,0);
+        \draw (0, 0.5) node[above]{L};
+        \draw[photon] (-4.5,0) -- (-3.5, 0) ;
+        \draw (-4,0) node[label=above:$\gamma$] {};
+        \draw (-2.5, -2) node[below]{S$_{IR}$};
+        \draw [dashed] (-2.5, -2) -- (-5, 0);
+        \draw (-4, -1) node[left]{D$_\gamma$};
+        \draw [dashed] (-2.5, -2) -- (5, 0);
+        \draw (1.5, -1.2) node[right]{D$_s$};
+        \draw [red][dashed] (-2.5, -2) -- (-2.5, 0);
+        \draw [red](-2.5, -1) node[right]{b};
+        \draw[blue,->] (4,0) arc (180:195:1cm) node[left]{$\beta$};
+    \end{tikzpicture}
+    \caption{Géométrie du système étudié : $S_\gamma$ est la source de photons gamma observée, $O$ est l'observateur et $S_{IR}$ est la source (ponctuelle) de photons à plus faible énergie, ici IR. Le paramètre d'impact est $b$, plus petite distance entre la ligne de visée, de longueur $L$ et la source ponctuelle. Les différents paramètres sont $D_\gamma$ la distance entre la source de photons cibles et la source gamma, $D_s$ la distance depuis la source de photons cibles jusqu'à l'observateur et $\beta$ l'angle d'ouverture entre la source gamma et la source de photons cibles depuis l'observateur.}
+        \label{fig: source ponctuelle}
+\end{figure}
+
+Grâce à la figure précédente (\ref{fig: source ponctuelle}), nous pouvons, en connaissant la distance entre la source de photons gamma et la source de photons IR mais aussi en connaissant la distance entre nous et la source de photons IR, connaître la distance à la source de photons gamma mais aussi le paramètre d'impact.
+
+\begin{align*}
+	D_\gamma^2 &= L^2 + D_s^2 - 2D_s L \cos\beta\\
+    b &=D_s\sin\beta
+\end{align*}
+où $\beta$ est l'ouverture angulaire depuis l'observateur sous-tendue par la source gamma et la source IR.
+
+En connaissant la dépendance en la distance du flux d'énergie mais aussi en fixant au'au lieu le plus proche de la source IR sur la ligne de visée la densité d'énergie vaut \SI{1}{\eV/\cm^3} nous pouvons trouver la distribution non isotrope de densité de photons.
+
+\begin{equation}
+	\frac{dn}{d\epsilon} = 4\pi \frac{2\epsilon^2}{(h c)^3} \frac{1}{\exp\left(\frac{\epsilon}{kT}\right) - 1} \frac{u}{a T^4}
+\end{equation}
+Le facteur $4\pi$ vient de l'intégration angulaire de l'intégrale (\ref{eq: tau}) puisque la source de photons cibles est ponctuelle, elle n'a pas de dimension angulaire, par contre, il reste les intégrations sur la gamme d'énergie $\epsilon$ et le long de la ligne de visée. Le facteur $u/(a T^4)$ vient de la considération que la source IR est un corps gris.
+
+Soient deux sources de photons cibles, une à \SI{25}{\K} et une à \SI{20}{\K} située à différentes distances de l'observateur, \SI{8.5}{\kpc} et \SI{12}{\kpc}. Les figures (\ref{fig: 25K}) et (\ref{fig: 20K}) ci-dessous nous montrent l'atténuation due à cette source pour différentes distances entre la source gamma et la source IR. Nous pouvons remarquer que l'atténuation dépend de plusieurs facteurs, la distance entre les deux sources et l'angle entre les deux moments impulsionnels. Dans les figure (\ref{fig: transmitance 12 10 25K}) et (\ref{fig: transmitance 12 10 20K}), cas où la source IR se trouve derrière la source gamma, il n'y a pas d'atténuation. En effet, les photons cibles suivent les photons gamma et puisqu'ils voyagent à la même vitesse, ils ne peuvent les rattraper. Pour les autres positions de la source secondaire, nous pouvons constater qu'il existe une distance $D_\gamma$ où l'atténuation est maximale. Ceci s'explique géométriquement, la densité de photons cibles est d'autant plus grande que la source est proche et la section efficace dépend principalement de l'angle d'interaction $\alpha$, de la géométrie du système. Enfin, le minimum d'atténuation se passe à des énergies différentes et ceci est dû à l'angle $\beta$ sous-tendu par la source IR et la ligne de visée.
+
+\begin{figure}
+	\centering
+    \subfloat [$D_S$ = \SI{12}{\kpc} et L = \SI{10}{\kpc} \label{fig: transmitance 12 10 25K}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctsource_ponctuelle_12_10_25K.eps}}\hfill
+	\subfloat [$D_s$ = \SI{8.5}{\kpc} et L = \SI{10}{\kpc}\label{fig: transmitance 8.5 10 25K}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctsource_ponctuelle_8_5_10_25K.eps}}\hfill
+    \subfloat [$D_s$ = \SI{8.5}{\kpc} et L = \SI{12}{\kpc}\label{fig: transmitance 8.5 12 25K}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctsource_ponctuelle_8_5_12_25K.eps}}\hfill
+    \caption{Transmittance de photons gamma à des énergies entre $10^{-1}$ et $10^5$ \si{\TeV} traversant un champ de photons anisotrope de photons IR issus d'une source hors ligne de visée à une température de \SI{25}{\K}, différentes distances $R$ et une densité d'énergie de \SI{1}{\eV/\cm^3} au lieu de la ligne de visée la plus proche de la source.}
+    \label{fig: 25K}
+\end{figure}
+
+\begin{figure}
+	\centering
+    \subfloat [$D_s$ = \SI{12}{\kpc} et L = \SI{10}{\kpc} \label{fig: transmitance 12 10 20K}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctsource_ponctuelle_12_10_20K.eps}}\hfill
+	\subfloat [$D_s$ = \SI{8.5}{\kpc} et L = \SI{10}{\kpc}\label{fig: transmitance 8.5 10 20K}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctsource_ponctuelle_8_5_10_20K.eps}}\hfill
+    \subfloat [$D_s$ = \SI{8.5}{\kpc} et L = \SI{12}{\kpc}\label{fig: transmitance 8.5 12 20K}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctsource_ponctuelle_8_5_12_20K.eps}}\hfill
+    \caption{Transmittance de photons gamma à des énergies entre $10^{-1}$ et $10^5$ \si{\TeV} traversant un champ de photons anisotrope de photons IR issus d'une source hors ligne de visée à une température de \SI{20}{\K}, différentes distances $R$ et une densité d'énergie de \SI{1}{\eV/\cm^3} au lieu de la ligne de visée la plus proche de la source.}
+    \label{fig: 20K}
+\end{figure}
+\newpage
+
+\subsection{Transmittance pour une source sphérique}
+
+Considérons une source sphérique de rayon $R$ hors de la ligne de visée, à une distance $b$, paramètre d'impact, de cette dernière. La géométrie du système est décrite dans la figure suivante (\ref{fig: source spherique}) où nous avons choisi pour paramètres indépendants : la distance à la source de photons gamma (la longueur de la ligne de visée, $L$), la distance à la source sphérique de photons cibles (la distance $D_{star}$), le paramètre d'impact ($b$) et la position sur la ligne de visée la plus proche de l'étoile hors axe ($z_b$).
+
+\begin{figure}[H]
+	\centering
+    \begin{tikzpicture}
+        \draw (-5.5,0) node[left]{S$_\gamma$};
+        \draw (5.5, 0) node[right]{O};
+        \draw [dashed] (-5,0) -- (5,0);
+        \draw (0, 0.5) node[above]{L};
+        \draw[photon] (-4.5,0) -- (-3.5, 0) ;
+        \draw (-4,0) node[label=above:$\gamma$] {};
+        \draw (-2.5, -2.5) node[left]{Star};
+        \draw (-2.5,-2.5) circle (1) ;
+        \draw [dashed] (-2.5, -2.5) -- (-5, 0);
+        \draw [dashed] (-2.5, -2.5) -- (5, 0);
+        \draw (1.5, -1.9) node[above]{D$_{star}$};
+        \draw [red][dashed] (-2.5, -2.5) -- (-2.5, 0);
+        \draw [red] (-2.5, -1) node[right]{b};
+        \draw [red] (-2.5, 0) node[above]{z$_b$};
+        \draw [blue][dashed] (-2.5, -2.5) -- (-1.5, -2.5);
+        \draw [blue] (-2, -2.5) node[below]{R};
+    \end{tikzpicture}
+    \caption{Géométrie du système étudié : $S_\gamma$ est la source de photons gamma observée, $O$ est l'observateur et $Star$ est la source (sphérique de rayon $R$) de photons à plus faible énergie. Le paramètre d'impact est $b$ et $L$ est la longueur de la ligne de visée.}
+        \label{fig: source spherique}
+\end{figure}
+Il est nécessaire de connaître la distance du centre de l'étoile et l'angle solide sous-tendu par l'étoile en toute position le long de la ligne de visée. La distance à la source est
+\begin{equation*}
+	D^2 = (z - z_b)^2 + b^2
+\end{equation*}
+Pour l'angle solide sous-tendu, nous avons
+\begin{align*}
+	\phi &\in [0, 2\pi]\\
+    \theta &\in [0, \theta_{max}] \text{ où } \sin\theta_{max} = R/D
+\end{align*}
+où $\phi$ est l'angle de rotation autour de l'axe reliant le centre de l'étoile à  $\theta$ est l'angle formé par le rai provenant de la source à une certaine position le long de la ligne de visée et la droite reliant cette position au centre de l'étoile.
+Puisque la source est finie, la densité différentielle de photon en considérant que la source est à sa surface un corps noir à la température $T$ est
+\begin{equation}
+	\frac{d n (z, \epsilon, \theta)}{d \epsilon d \Omega} = \frac{B_\nu \cos\theta}{c h^2 \nu}
+    \label{eq: densite anisotrope}
+\end{equation}
+où $B_\nu$ est la densité spectrale d'un corps noir à la température $T$.
+
+En injectant l'expression de la densité (\ref{eq: densite anisotrope}) et l'angle solide $d \Omega = d\phi d\cos\theta$ dans l'expression de $\tau_{\gamma \gamma}$ (\ref{eq: tau}) nous obtenons
+\begin{equation}
+	\tau_{\gamma \gamma} (E) = \int_L d z \int_{(m_e c^2)^2/E}^{\infty} d \epsilon \int_0^{\theta_{max}} \sin\theta d \theta \int_0^{2\pi} \frac{B_\nu \cos\theta}{c h^2 \nu} \sigma_{\gamma \gamma}(\epsilon_c) (1 - \cos\alpha) d \phi
+\end{equation}
+où $\alpha$ est l'angle entre les deux moments des deux photons et $\epsilon_c = \left[\frac{\epsilon E}{2} (1 - \cos\alpha)\right]^{1/2}$.
+
+Dans le cas qui nous intéresse, l'étoile est assez proche de la ligne de visée et assez éloignée de l'observateur. Puisque la section efficace d'interaction dépend fortement de l'angle entre les deux photons et que plus cet angle sera grand, plus elle sera faible, il est inutile d'intégrer sur toute la ligne de visée car au-delà d'une certaine distance, l'interaction sera négligeable. De plus, la densité de photons issu de la source diminue avec la distance. Ce qui explique le choix d'intégrer sur une petite distance, \SI{20}{\astronomicalunit}, pour un certain paramètre d'impact. Le rayon de la source sera également fixé à \SI{0.5}{\astronomicalunit}. Si la distance projetée sur la ligne de visée ($z_b$) à la source gamma n'est pas précisée dans les simulations, elle est prise à \SI{10}{\astronomicalunit}.
+
+\subsubsection{Transmittance selon la température et le paramètre d'impact}
+
+Pour bien comprendre ce qui se passe physiquement, nous avons simuler plusieurs atténuations pour plusieurs cas possibles.
+
+\begin{figure}[H]
+	\centering
+    \subfloat [b = \SI{5}{\astronomicalunit} \label{fig: source finie T}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectSource_finie_5ua_T.eps}}\hfill
+    \subfloat [T = \SI{10000}{\K} \label{fig: source finie b}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectSource_finie_10000K_b.eps}}\hfill
+    \caption{Comparaison de la transmittance de photons gamma à des énergies entre $10^{-1}$ et $10^5$ \si{\TeV} traversant un champ de photons anisotrope de photons issu d'une source de rayon $R$ à (a) différentes températures et (b) différents paramètres d'impact.}
+\end{figure}
+
+\paragraph*{Premier cas : variation de la température de la source}\hspace{0pt} \\
+Dans ce cas, nous allons étudier l'influence de la température de la source sur la transmittance des photons gamma. Nous choissisons une source se situant à une distance $b$ fixe de \SI{5}{\astronomicalunit} et dont sa température de surface varie (3000, 6000 et \SI{10000}{\K}) (cf fig.(\ref{fig: source finie T})).
+
+Pour une même géométrie, même paramètre d'impact et même distance projetée sur la ligne de visée, la température de la source a aussi une influence sur la transmittance des photons gamma tant sur l'énergie du minimum que sur la profondeur du minimum. Par contre, la largeur du minimum reste à peu près constante. Au regard de la figure (\ref{fig: source finie T}), au plus la température de la source est élevée, au plus le minimum de transmittance sera faible et déplacer vers de faibles énergies de photons cibles.
+
+Remarquons que la profondeur du minimum de transmittance dépend fortement de la température (cf figure (\ref{fig: Transmittance})). Cette dépendance peut être vérifiée analytiquement. En effet, la profondeur optique varie comme $T^3$, la transmittance doit alors varier comme $\exp (-T^3)$ ce dont nos simulations numériques nous redonnent.
+
+Par exemple,
+\begin{align*}
+	\frac{\text{profondeur du pic à \SI{3000}{\K}}}{\text{profondeur du pic à \SI{6000}{\K}}} &\approx \frac{- \ln (0.9789)}{- \ln(0.8437)} \approx 0.027\\
+    \frac{3000^3}{6000^3} &= 0.027
+\end{align*}
+
+\begin{figure}[H]
+	\centering
+    \subfloat [T = \SI{3000}{\K} \label{fig: source finie 3000K}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectSource_finie_3000K.eps}}\hfill
+    \subfloat [T = \SI{6000}{\K} \label{fig: source finie 6000K}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectSource_finie_6000K.eps}}\hfill
+    \subfloat [T = \SI{10000}{\K} \label{fig: source finie 10000K}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectSource_finie_10000K.eps}}\hfill
+    \caption{Transmittance de photons gamma à des énergies entre $10^{-1}$ et $10^5$ \si{\TeV} traversant un champ de photons anisotrope de photons issu d'une source de rayon $R$ à différentes températures.}
+    \label{fig: Transmittance}
+\end{figure}
+\newpage
+
+\paragraph*{Deuxième cas : variation du paramètre d'impact} \hspace{0pt} \\
+Dans ce cas, nous allons voir la dépendance en $b$ de la transmittance. Dans cette simulation, la source a une température fixée à \SI{10000}{\K} mais sa distance à la ligne de visée, $b$, varie (0.5, 5 et \SI{10}{\astronomicalunit}) (cf fig.(\ref{fig: source finie b})).
+
+Le paramètre d'impact a une influence dans la profondeur du minimum de transmittance. En effet, pour une température et une distance projetée sur la ligne de visée données, le minimum de transmittance sera à une certaine énergie du photon gamma, elle dépend de la géométrie du système et des énergies des photons gamma et cibles. Par contre, la profondeur dépend essentiellement de la densité de photons, au plus grande elle sera, au plus probable seront les interactions gamma-gamma, la transmittance sera plus faible et vice-versa. Cela se voit bien sur la figure (\ref{fig: source finie b}) où pour un faible paramètre d'impact la transmittance est d'autant plus faible que pour un paramètre d'impact élevé. Remarquons aussi que la largeur du minimum est d'autant plus grande que le paramètre d'impact est petit.
+
+La dernière valeur de $b$ prise pour les simulations, $b = \SI{0.5}{\astronomicalunit}$ a été choisie de telle manière que la surface de la source de photons cibles soit tangentielle à la ligne de visée. Dans cette configuration, l'atténuation, sans éclipse, est la plus grande, la transmittance est nulle pour une large gamma d'énergie.
+
+\subsubsection{Probabilité d'absorption en fonction de la position le long de la ligne de visée}
+
+Il est intéressant de voir l'évolution de la probabilité d'absorption le long de la ligne de visée (cf eq.(\ref{eq: proba abs})) pour une énergie telle que l'atténuation soit non nulle.
+\begin{equation}
+	\frac{d \tau_{\gamma,\gamma}}{d z} (z) = \int_{(m_e c^2)^2/E}^\infty d \epsilon \int_0^{\theta_{max}} \sin\theta d \theta \int_0^{2\pi} \frac{B_\nu \cos\theta}{c h^2 \nu} \sigma_{\gamma, \gamma}(\epsilon_c) (1 - \cos\alpha) d\phi
+    \label{eq: proba abs}
+\end{equation}
+
+La configuration géométrique et énergétique choisie pour les simulations sera un paramètre d'impact ($b$) de \SI{5}{\astronomicalunit}, une distance à parcourir pour le photon gamma de \SI{20}{\astronomicalunit} et une énergie du photon gamma de \SI{1}{\TeV} et une température de la source variante (3000, 6000 et \SI{10000}{\K})(cf fig.(\ref{fig: optical depth zb}) et fig.(\ref{fig: optical depth compare})). Plusieurs simulations vont être réalisées suivant différents critères : la variation de la distance projetée sur la ligne de visée à la source gamma pour une densité non uniforme due à notre source sphérique de rayon $R$ mais aussi pour une densité uniforme le long de la ligne de visée et une distance $z_b$ constante afin de voir la dépendance en la géométrie de la profondeur optique.
+
+En vu des figures précédentes (\ref{fig: optical depth zb}) et (\ref{fig: optical depth compare}), plusieurs constatations sont possibles. La probabilitee d'absorption a une valeur non nulle pour $z = 0$ cela s'explique par le fait que la source gamma se situe en cette position et que les photons partant de la source sphérique et rencontrant le photon gamma le long de la ligne de visée en cette position arrivent avec un angle $\theta$ supérieur à $\pi/2$, la section efficace est non nulle. La croissance de la profondeur optique jusqu'à une certaine valeur de $z$ s'explique par la section efficace dépendante de l'angle $\alpha$ entre les deux moments des deux photons et la densité de photons qui augmente en s'approchant de la source. Le pic de profbabilité se trouve juste avant la valeur de $z_b$. En effet, la section efficace pique pour ces énergies un peu avant $\alpha = \pi/2$ et la densité de photons est maximale pour $z = z_b$. Pour des $z$ plus grands, la probabilité chute avec le même taux quelque soit la valeur de $z_b$. De plus, comme nous le montre les figures (\ref{fig: optical depth 10000}), (\ref{fig: optical depth density 6000}) et (\ref{fig: optical depth density 3000}), la hauteur du pic dépend de la température de la source secondaire, de l'énergie des photons cibles. Au plus, la température de la source est élevée, au plus énergétiques seront les photons cibles et au plus  grande sera la probabilité d'interaction.
+
+\begin{figure}
+	\centering
+    \subfloat [$T$ = \SI{10000}{\K} \label{fig: optical depth 10000}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_10000K.eps}}\hfill
+    \subfloat [$T$ = \SI{6000}{\K} \label{fig: optical depth density 6000}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_6000K.eps}}\hfill
+    \subfloat [$T$ = \SI{3000}{\K} \label{fig: optical depth density 3000}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_3000K.eps}}\hfill
+    \caption{Dépendance en la position le long de la ligne de visée de la profondeur optique pour une énergie de photons gamma donnée (\SI{1}{\TeV}) pour une source aux températures (a) \SI{10000}{\K}, (b) \SI{6000}{\K} et (c) \SI{3000}{\K} située à différentes distances projetées sur la ligne de visée à la source gamma (5, 10 et \SI{15}{\astronomicalunit}), un paramètre d'impact \SI{5}{\astronomicalunit} et une ligne de visée de \SI{20}{\astronomicalunit}.}
+    \label{fig: optical depth zb}
+\end{figure}
+
+\begin{figure}
+	\centering
+    \includegraphics[scale=0.8]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_all.eps}
+    \caption{Comparaison de la profondeur optique pour une densité de photons issue d'une source sphérique de rayon $R$ à une température fixée (\SI{10000}{\K}) avec celle pour une densité uniforme le long de la ligne de visée. La source gamma se trouve à \SI{20}{\astronomicalunit} de l'observateur, la source de photons hors axe se trouve à un paramètre d'impact $b$ de \SI{5}{\astronomicalunit} et le paramètre $z_b$ est de \SI{10}{\astronomicalunit}.}
+    \label{fig: optical depth compare}
+\end{figure}
+\newpage
+
+\section{Modélisation de l'atténuation gamma-gamma dans le cas d'un système binaire stellaire}
+
+Dans cette section, nous allons nous concentrer sur l'interaction gamma-gamma pour une source gamma situé à proximité d'un système binaire composé d'une naine blanche et de son compagnon, soit une géante rouge soit une étoile non évoluée (encore sur la séquence principale). Par la suite, la source gamma sera due au choc provoqué par l'explosion de la nova.
+
+\subsection{Cadre général}\label{sec: cadre général}
+
+Dans le cas que nous allons étudier nous devons d'abord choisir un système de coordonnées assez simple pour caractériser n'importe quelle ligne de visée et n'importe quelle source de rayonnement gamma pour une configuration du système binaire donnée. Pour cela, le référentiel choisi est celui décrit à la figure suivante (\ref{fig: coordonnees systeme binaire})
+
+\begin{figure}[H]
+	\centering
+    \begin{tikzpicture}
+        \draw [-] (-1.5,2.5) -- (5.5,2.5);
+        \draw [-] (-4,-2.5) -- (3,-2.5);
+        \draw [-] (-1.5,2.5) -- (-4, -2.5);
+        \draw [-] (5.5,2.5) -- (3,-2.5);
+        \draw (1.5,0.5) circle (0.20cm);
+        \draw (1.5,0.25) node[below]{RG};
+        \draw [thick] plot[mark=*,mark size=0.025mm](0.5,-0.25) node[below]{WD};
+        \draw [red!75!green!50!blue][->] (-0.5,-1) -- (2.5,1.25) node[right]{$X$};
+        \draw [red!75!green!50!blue][->] (0.5,-0.25) -- (-0.75,0.5) node[left]{$Y$};
+        \draw [red!75!green!50!blue][->] (0.5,-0.25) -- (0.5,1.25) node[above]{$Z$};
+        \draw [red,->] (0.5,-0.25) -- (1.9,3.5) node[above right]{$z$};
+        \draw [dashed] (1.9, 3.5) -- (1.9,1.75);
+        \draw [-red!75!green!50!blue, ->] (0.5, -0.25) -- (1.9, 1.75);
+        \draw [blue, ->] (0.5,1) arc (90:70:1.25cm)node [above left]{$\beta$};
+        \draw [-red!00!green!95!blue, ->] (1.9,0.8) arc (37:57:1.3cm)node [right]{$\alpha(t)$};
+    \end{tikzpicture}
+    \caption{Le repère $O_{XYZ}$ est le repère lié au plan orbital où la direction de référence $X$ est la direction entre la WD et la RG et l'origine du repère est fixé sur la WD. La direction $z$ est la direction à l'observateur, sa direction projetée sur la plan est représentée en vert. On définit les angles $\beta$ et $\alpha$ par la colatitude d'un point et l'angle polaire de ce même point respectivement.}
+    \label{fig: coordonnees systeme binaire}
+\end{figure}
+
+Nous allons passer de ces coordonnées aux coordonnées dans le référentiel du photon gamma dont les paramètres utilisés jusqu'alors dans nos simulations étaient la longueur de la ligne de visée ($L$), le paramètre d'impact ($b$) et la distance le long de la ligne de visée la plus proche de la source ($z_b$).
+
+\paragraph*{La naine blanche} \hspace{0pt} \\
+La figure ci-dessous (\ref{fig: WD}) nous présente les différentes grandeurs connues et recherchées.
+
+\begin{figure}[H]
+	\centering
+    \begin{tikzpicture}
+    	\draw [red, ->] (-5,1) -- (5,1);
+        \draw [red](0,1) node[above]{$L$};
+        \draw (-5.75, 1) node[right]{$S_\gamma$};
+        \draw (5.75, 1) node[left]{$O$};
+        \draw [thick] plot[mark=*,mark size=0.25mm](-2,-1) node[below]{WD};
+        \draw [cyan, dashed] (-2,-1) -- (-5,1);
+        \draw [cyan] (-3.75,0.17) node[below left]{$r_{\gamma, WD}$};
+        \draw [blue, ->] (-4,1) arc (0:-34:1cm)node [above left]{$\gamma_{WD}$};
+        \draw [red!25!green!80!blue] [dashed] (-2,-1) -- (-2,1);
+        \draw [red!25!green!80!blue](-2,0) node[right]{$b_{WD}$};
+        \draw [magenta] (-2,1) node[above]{$z_{WD}$};
+    \end{tikzpicture}
+    \caption{Représentation du système naine blanche, source gamma et observateur. Les grandeurs connues sont la distance entre la source gamma et la naine blanche ($r_\gamma$) et la longueur de la ligne de visée ($L$). Les grandeurs inconnues sont l'angle formé des directions source gamma vers naine blanche et source gamma vers l'observateur ($\gamma_{WD}$), le paramètre d'impact ($b_{WD}$) et la position le long de la ligne de visée la plus proche de la naine de la naine blanche ($z_{WD}$).}
+    \label{fig: WD}
+\end{figure}
+Grâce à cette figure, nous pouvons obtenir l'expression de l'angle $\gamma_{WD}$, compris entre 0 et $\pi/2$
+\begin{align}
+	\gamma_{WD} &= \arccos \left[- (\sin\beta_o\sin\beta_\gamma\cos\alpha_o\cos\alpha_\gamma + \sin\beta_o\sin\beta_\gamma\sin\alpha_o\sin\alpha_\gamma + \cos\beta_o\cos\beta_\gamma) \right] 
+    \label{eq: gamma_WD}
+\end{align}
+De cette expression nous pouvons déterminer les valeurs de $b_{WD}$ et $z_{WD}$.
+\begin{align*}
+	b_{WD} &= r_{\gamma, WD} \sin\gamma_{WD}\\
+\end{align*}
+\begin{equation*}
+	z_{WD} =
+    \left\{
+    \begin{array} {c}
+    	\sqrt{r_{\gamma, WD}^2 - b_{WD}^2} \text{ si $\gamma_{WD} \leq \pi/2$}\\
+        -\sqrt{r_{\gamma, WD}^2 - b_{WD}^2} \text{ si $\gamma_{WD} > \pi/2$}
+    \end{array}
+    \right.
+\end{equation*}
+
+\paragraph*{L'étoile compagnon}\footnote{Dans le cas où l'étoile compagnon et la naine blanche se retrouve au même point, les calculs reviennent aux précédents.} \hspace{0pt} \\
+La figure (\ref{fig: RG}) nous présente les différentes grandeurs connues et recherchées.
+
+\begin{figure}[H]
+	\centering
+    \begin{tikzpicture}
+    	\draw [red, ->] (-5,1) -- (5,1);
+        \draw [red](0,1) node[above]{$L$};
+        \draw (-5.75, 1) node[right]{$S_\gamma$};
+        \draw (5.75, 1) node[left]{$O$};
+        \draw [thick] plot[mark=*,mark size=0.75mm](-2,-1) node[below]{RG};
+        \draw [cyan, dashed] (-2,-1) -- (-5,1);
+        \draw [cyan] (-3.75,0.17) node[below left]{$r_{\gamma, RG}$};
+        \draw [blue, ->] (-4,1) arc (0:-34:1cm)node [above left]{$\gamma_{RG}$};
+        \draw [red!25!green!80!blue] [dashed] (-2,-1) -- (-2,1);
+        \draw [red!25!green!80!blue](-2,0) node[right]{$b_{RG}$};
+        \draw [magenta] (-2,1) node[above]{$z_{RG}$};
+    \end{tikzpicture}
+    \caption{Représentation du système étoile compagnon située à une distance orbitale connue $d_{orb}$, source gamma et observateur. La grandeur connue est la longueur de la ligne de visée ($L$). Les grandeurs inconnues sont l'angle formé des directions source gamma vers le compagnon et source gamma vers l'observateur ($\gamma_{RG}$), le paramètre d'impact ($b_{RG}$) et la position le long de la ligne de visée la plus proche de la naine de l'étoile compagnon ($z_{RG}$).}
+    \label{fig: RG}
+\end{figure}
+Connaissant le vecteur position de l'étoile compagnon par rapport au centre du référentiel, la naine blanche, nous pouvons exprimer l'angle $\gamma_{RG}$ (compris entre 0 et $\pi/2$) entre autre en se référent à la figure (\ref{fig: RG}).
+\begin{equation}
+\begin{split}
+	\gamma_{RG} = \arccos &\left[\frac{d_{orb}\sin\beta_o\cos\alpha_o}{\left(d_{orb}^2 - 2 r_\gamma d_{orb} \sin\beta_\gamma\cos\alpha_\gamma + r_\gamma^2 \right)^{1/2}} \right. \\
+    &\left. -\frac{r_\gamma (\sin\beta_\gamma\cos\alpha_\gamma\sin\beta_o\cos\beta_o + \sin\beta_\gamma\sin\alpha_\gamma\sin\beta_o\sin\alpha_o + \cos\beta_\gamma\cos\beta_o)}{\left(d_{orb}^2 - 2 r_\gamma d_{orb} \sin\beta_\gamma\cos\alpha_\gamma + r_\gamma^2 \right)^{1/2}}\right]
+\end{split}
+\label{eq: gamma_RG}
+\end{equation}
+De cette expression nous pouvons déterminer les valeurs de $b_{RG}$ et $z_{RG}$ en connaissant la distance à la source $r_{\gamma,RG} = \left[d_{orb}^2 - 2 r_{\gamma, WD} d_{orb} \sin\beta_\gamma\sin\alpha_\gamma + r_{\gamma, WD}^2 \right]^{1/2}$.
+\begin{align*}
+	b_{RG} &= r_{\gamma, RG} \sin\gamma_{RG}\\
+\end{align*}
+\begin{equation*}
+	z_{RG} =
+    \left\{
+    \begin{array} {c}
+    	\sqrt{r_{\gamma, RG}^2 - b_{RG}^2} \text{ si $\gamma_{RG} \leq \pi/2$}\\
+        -\sqrt{r_{\gamma, RG}^2 - b_{RG}^2} \text{ si $\gamma_{RG} > \pi/2$}
+    \end{array}
+    \right.
+\end{equation*}
+\newpage
+
+\subsection{Transmittance et géométrie}
+
+La transmittance des photons gamma dépend de la configuration géométrique du système, la position des deux sources (WD et RG) par rapport à la position de la source gamma et à la direction de l'observateur. En effet, l'interaction gamma-gamma dépend fortement de l'angle d'attaque entre les deux photons ($\alpha$) mais aussi de la densité de photons cibles, de la distance aux sources. Lorsque la source gamma se trouve directement derrière au moins l'une des deux sources de photons cibles par rapport à la direction de l'observateur, il y a un phénomème d'éclipse et le calcul de la transmittance n'a pas de sens car les photons gamma ne peuvent pas traverser la source qui l'occulte.
+
+Les simulations qui vont suivre seront portée sur deux cas précis de binaire :
+\begin{itemize}
+\item nova symbiotique où la naine blanche et son compagnon évolué de type géante rouge sont dans un système binaire avec une distance orbitale non négligeable.
+\item nova classique où la naine blanche et son compagnon non évolué, i.e sur la séquence principale, sont dans un système binaire très serré
+\end{itemize}
+Dans le premier cas, nous allons nous concentrer sur le système de V407 Cygni où la distance orbitale est estimée à \SI{16}{\astronomicalunit} et la distance à l'observateur est  estimée à \SI{2.7}{\kpc}. Pour le second cas, nous allons considérer que les deux sources (naine blanche et son compagnon) se trouve au même point.
+
+\subsubsection{Nova symbiotique}\label{sec: nova symbiotique}
+
+Nous allons considérer le cas où tout est statique. La naine blanche a une photosphère d'un rayon de \SI{0.5}{\astronomicalunit} et une température de \SI{10000}{\K} tout au long de l'observation et la géante rouge a un rayon de \SI{2}{\astronomicalunit} et une tempéraure de \SI{3000}{\K}.
+
+Nous allons ensuite étudier plusieurs cas en fixant soit la source gamma à une certaine position soit la direction de l'observateur et nous allons simuler l'atténuation causée par les deux sources secondaires suivant la géométrie choisie.
+
+\paragraph*{Source derrière les deux sources secondaires} \hspace{0pt} \\
+
+Considérons le cas où la source se trouve derrière les deux étoiles par rapport à la direction $X$ (cf figure (\ref{fig: simu1})). Si l'observateur se trouve vers les $X$ positifs, au-delà de la géante rouge, l'atténuation sera plus grande que lorsque la source gamma se trouve devant les deux étoiles, au-delà de la géante rouge, "entre" la géante rouge et l'observateur. Dans les simulations qui vont suivre, la source gamma sera positionnée aux coordonnées suivantes $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (\pi, \pi/2, \SI{2}{\astronomicalunit})$ \footnote{$r_\gamma$ est la distance à la naine blanche à partir de la source gamma}. De plus, l'atténuation due a la naine blanche sera plus grande que celle due à la géante rouge à cause de la proximité à la naine blanche (densité de photons cibles plus élevée) et à la température de la naine blanche (énergies des photons cibles plus élevées).
+\begin{figure}[H]
+	\centering
+    \begin{tikzpicture}
+    	\draw [red!75!green!60!blue] [dashed] (-3,0) -- (6,0);
+        \draw [red!75!green!60!blue] [->] (6,0) -- (6.15,0) node[right]{$X$};
+        \draw [thick] plot[mark=*,mark size=0.15mm](-2,0) node[below]{WD};
+        \draw [thick] plot[mark=*,mark size=0.75mm](5,0) node[below]{RG};
+        \draw plot[mark=+, mark size = 0.9mm](-2.5,0) node[above]{$S_\gamma$};
+    \end{tikzpicture}
+    \caption{Représentation de la position de la source gamma par rapport aux deux sources secondaires (WD et RG) pour les premières simulations.}
+    \label{fig: simu1}
+\end{figure}
+
+Les figures (\ref{fig: simu1 resultat}) représentent les différentes simulations aue nous avons faites pour deux directions d'observation et une position fixe de la source gamma.
+
+La figure (\ref{fig: simu1 pi/4 pi/2}) représente le cas où la source de photons gamma n'est pas occultée par les astres du système et est proche de la naine blanche, l'atténuation causée par la naine blanche est d'autant plus grande que celle causée par la géante rouge. Cela est dû à la proximité et de la température de la naine blanche.
+
+Deuxième cas, la source gamma se trouve derrière les deux sources secondaires par rapport à la direction d'observation. La figure (\ref{fig: simu1 0 pi/2}) représente ce que l'observateur devrait voir si les photons gamma pouvaient traverser les deux sources. Nous remarquons que l'atténuation due à la naine blanche est d'autant plus forte que dans le cas précédent, ceci s'explique par l'angle d'attaque qui est proche de $\pi$, la configuration la plus optimale. Comme dans le précédent, l'atténuation due à la naine blanche est plus forte aue celle due à la géante rouge, la naine blanche étant plus chaude et plus proche que la géante rouge. Par contre, la physique interdit de retrouver le dernier cas, en effet, il y a une éclipse et les photons issus de la source gamma ne traversent pas l'une ou l'autre source. Voilà pourquoi il est nécessaire d'ajouter dans le code une condition géométrique pour inclure ce cas.
+
+\begin{figure}[H]
+	\centering
+    \subfloat [$(\alpha_o, \beta_o) = (\pi/4, \pi/2)$ \label{fig: simu1 pi/4 pi/2}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_RG_2ua_behind_pi4.eps}}\hfill
+    \subfloat [$(\alpha_o, \beta_o) = (0, \pi/2)$ \label{fig: simu1 0 pi/2}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_RG_2ua_behind_0.eps}}\hfill
+    \caption{Transmittance pour une source gamma située aux coordonnées $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (\pi, \pi/2, \SI{2}{\astronomicalunit})$ et deux directions d'observation : (a) observation dans le plan orbital et le long de la ligne de référence, (b) observation dans le plan orbital et à un angle de $\pi/4$ de la ligne interastre.}
+    \label{fig: simu1 resultat}
+\end{figure}
+
+\paragraph*{Source entre les deux sources secondaires} \hspace{0pt} \\
+
+Considérons maintenant le cas où la source gamma  se trouve entre les deux sources secondaires et prenons les coordonnées de l'observateur comme précédemment : $(\alpha_o, \beta_o) = (\pi/4, \pi/2)$ et $(\alpha_o, \beta_o) = (0, \pi/2)$. Le premier cas est choisi afin d'éviter l'éclipse alors que le second cas est choisi telle qu'il y en a une.
+
+Les figures (\ref{fig: simu2 resultat}) nous présentent l'atténuation d'une source située entre les deux sources secondaires (la naine blanche et la géante rouge) à une distance de \SI{2}{\astronomicalunit} de la naine blanche pour deux directions d'observation différente : lorsque la source gamma dans une direction non éclipsée aux coordonnées $(\alpha_o, \beta_o) = (\pi/4, \pi/2)$ et pour une direction éclipsée aux coordonnées $(\alpha_o, \beta_o) = (0, \pi/2)$.
+
+\begin{figure}[H]
+	\centering
+    \subfloat [$(\alpha_o, \beta_o) = (0, \pi/2)$ \label{fig: simu2 0 pi/2}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_RG_2au_0.eps}}\hfill
+    \subfloat [$(\alpha_o, \beta_o) = (0, \pi/2)$ \label{fig: simu2 0 pi/2 zoom}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_RG_2au_0_zoom.eps}}\hfill
+    \subfloat [$(\alpha_o, \beta_o) = (\pi/4, \pi/2)$ \label{fig: simu2 pi/4 pi/2}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_RG_2au_pi4.eps}}\hfill
+    \caption{Transmittance pour une source gamma située aux coordonnées $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$ et deux directions d'observation :  (a) et (b) observation dans le plan orbital et le long de la ligne de référence, et (c) observation dans le plan orbital et à un angle de $\pi/4$ de la ligne interastre. La figure (b) est un zoom sur l'atténuation due à la naine blanche du cas (a).}
+    \label{fig: simu2 resultat}
+\end{figure}
+Le premier cas (cf fig.(\ref{fig: simu2 pi/4 pi/2})) est le cas non occulté, les conditions géométrique et énergétique implique que la naine blanche atténue moins et à plus haute énergie que la géante rouge à cause de la dépendance en l'angle d'attaque et en l'énergie de la section efficace et cela malgré le fait que la géante rouge est plus éloignée de la source gamma que la naine blanche.
+
+Le deuxième cas (cf fig.(\ref{fig: simu2 0 pi/2} et fig.(\ref{fig: simu2 0 pi/2 zoom})) représente un cas non physique mais permet de bien comprendre ce qui intervient dans l'interaction gamma-gamma. La source gamma se trouve devant la naine blanche et derrière la géante rouge par rapport à l'observateur, à cause de l'angle d'attaque pour les photons provenant de la naine blanche et de la taille finie de cette source l'atténuation due à la naine blanche n'est pas nulle mais très faible (cf fig.(\ref{fig: simu2 0 pi/2 zoom})). Alors la majorité de l'atténuation est due à la géante rouge. Cependant, cette simulation n'est pas physique car la source gamma est normalement éclipsée par la géante rouge et les photons gamma ne la traversent pas.
+
+\subsubsection{Nova classique}\label{sec: nova classique}
+
+Prenons une nova classique, le compagnon de la naine blanche est de type solaire avec un rayon de \SI{0.005}{\astronomicalunit} avec une température effective de \SI{5700}{\K}. Les caractéristiques de la naine blanche sont les mêmes que pour le cas de la nova symbiotique (section \ref{sec: nova symbiotique}). La distance orbitale entre les deux compagnons est considérée comme nulle.
+
+\begin{figure}[H]
+	\centering
+    \subfloat [$(\alpha_o, \beta_o) = (0, \pi/2)$ ]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_2nd_0au_0.eps}}\hfill
+    \subfloat [$(\alpha_o, \beta_o) = (\pi/4, \pi/2)$ ]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_2nd_0au_pi4.eps}}\hfill    \caption{Transmittance pour une source gamma située en $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$ pour une observation dans deux directions : (a) $(\alpha_o, \beta_o) = (0, \pi/2)$ et (b) $(\alpha_o, \beta_o) = (\pi/4, \pi/2)$, dans le cas d'une nova classique où les deux étoiles sont situées au même point, la naine blanche a un rayon de \SI{0.5}{\astronomicalunit} et une température de \SI{10000}{\K} et son compagnon est une étoile de type solaire de rayon \SI{0.005}{\astronomicalunit} et de température \SI{5700}{\K}.}
+    \label{fig: classique}
+\end{figure}
+
+Nous pouvons constater grâce à la figure ci-dessus (cf figure (\ref{fig: classique})) que l'étoile compagnon n'intervient pas dans l'atténuation de la source gamma quelque soit la direction d'observation. Cela est dû  aux conditions énergétiques. Si la source gamma se trouve devant la naine blanche par rapport à l'observateur, il est normal que l'atténuation soit faible par contre, si elle se trouve à peu près devant mais qu'elle n'est pas juste devant, l'atténuation sera plus grande. Cependant, le premier cas est non physique car la source gamma se trouve derrière et éclipsée par le compagnon qui empèche les photons gamma d'atteindre l'observateur.
+
+Le fait de pouvoir négliger la seconde source de photons cibles simplifiera nos calculs numériques par la suite (cf section \ref{sec: choc en progression}).
+\newpage
+
+\subsection{Influence du pas angulaire sur la transmittance}
+
+Il est intéressant de voir également l'influence sur la transmittance des deux pas angulaire (sur $\varphi$ et sur $\theta$) afin d'optimiser le calcul numérique.
+
+Les figures (\ref{fig: delta phi}) nous montrent la transmittance pour une source gamma située en $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$, pour la nova classique décrite dans la section \ref{sec: nova classique} pour différents pas sur l'angle $\varphi$.
+
+\begin{figure}[H]
+	\centering
+    \subfloat [$\delta \varphi = 0.1$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_2nd_phi_0_1.eps}}\hfill
+    \subfloat [$\delta \varphi = 0.1$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_2nd_phi_0_5.eps}}\hfill
+    \caption{Dépendance en le pas angulaire pour l'angle $\varphi$ de la transmittance dans le cas d'une nova classique où la source gamma se situe en $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$, la naine blanche a un rayon de \SI{0.5}{\astronomicalunit} et une température de \SI{10000}{\K}, et l'étoile compagnon est de type solaire avec un rayon de \SI{0.005}{\astronomicalunit} et une température de \SI{5700}{\K}. Les deux compagnons sont considérés au même point dans la simulation.}
+    \label{fig: delta phi}
+\end{figure}
+
+Remarquons que niveau précision il n'y a rien qui change dans la valeur de la transmittance lorsque le pas sur $\varphi$ varie, il est donc judicieux de prendre un pas pas trop petit pour optimiser au mieux le calcul numérique.
+
+Regardons maintenant ce qu'il advient avec le pas sur $\theta$. Tout d'abord remarquons que si le pas est trop grand, supérieur à $\theta_{max}$, le code nous renverra une transmittance de $1$. Ceci s'explique par le fait que l'intégration sur $\theta$ donnera $0$. Il faut donc faire attention à cette contrainte. Ensuite les figures (\ref{fig: delta theta}) furent faites en plaçant la source gamma aux coordonnées $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$ et en observant suivant la direction $(\alpha_o, \beta_o) = (\pi/4, \pi/2)$ le système binaire serré composé d'une naine blanche de rayon \SI{0.5}{\astronomicalunit} et de température \SI{10000}{\K} et d'une étoile de type solaire de rayon \SI{0.005}{\astronomicalunit} et de température \SI{5700}{\K}. Au regard de ces figures, nous pouvons remarquer que la précision n'est pas altérée par le pas sur $\theta$ et il est donc judicieux de le prendre pas trop grand pour que l'intégrale sur cette angle ne nous renvoit pas $0$ mais aussi pas trop petit pour que le temps de calcul ne soit pas trop grand.
+
+\begin{figure}[H]
+	\centering
+    \subfloat [$\delta \theta = 0.01$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_2nd_theta_0_01.eps}}\hfill
+    \subfloat [$\delta \theta = 0.001$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectWD_2nd_theta_0_001.eps}}\hfill
+    \caption{Dépendance en le pas angulaire pour l'angle $\theta$ de la transmittance dans le cas d'une nova classique où la source gamma se situe en $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$, la naine blanche a un rayon de \SI{0.5}{\astronomicalunit} et une température de \SI{10000}{\K}, et l'étoile compagnon est de type solaire avec un rayon de \SI{0.005}{\astronomicalunit} et une température de \SI{5700}{\K}. Les deux compagnons sont considérés au même point dans la simulation.}
+    \label{fig: delta theta}
+\end{figure}
+
+Au vu de ces simulations, nous avons remarquer que le pas angulaire que ce soit sur $\varphi$ ou sur $\theta$, tant que ce dernier ne soit pas trop grand vis-à-vis des bornes d'intégration, n'a pas d'influence sur la précision de la trnamsittance mais plutôt sur le temps de calcul. Il est donc judicieux d'en prendre un pas trop petit ni trop grand pour optimiser nos simulations.
+
+\subsection{Dépendance en la distance parcourue par le photon gamma}
+
+Un autre point intéressant à voir est la dépendance en la longueur $L$ pour l'intégration sur $z$. En effet, vu que le système est assez serré comparé à la distance à l'observateur, au-delà d'une certaine distance parcourue par le photon gamma, la profondeur optique plafonnera à une certaine valeur. En effet, la densité de photons du système binaire diminue fortement en fonction de la distance et la section efficace dépend de l'angle d'interaction, au plus cet angle est faible, au moins il y aura d'interaction. Cela explique le plafonnement de la valeur de $\tau$, il est donc inutile d'intégrer au-delà et en stoppant l'intégration à ce $L_{max}$ cela optimise le temps de calcul.
+
+\begin{figure}[H]
+	\centering
+    \subfloat [$(\alpha_\gamma, \beta_\gamma, r_\gamma) = (\pi, \pi/2, \SI{2}{\astronomicalunit})$ \label{fig: tau pi}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_L_pi.eps}}\hfill
+    \subfloat [$(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$ \label{fig: tau 0}]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_L_0.eps}}\hfill
+    \caption{Dépendance de la profondeur optique en fonction de la distance parcourue par le photon gamma le long de la ligne de visée. Nous avons pris deux coordonnées différentes pour la source gamma : (a) $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (\pi, \pi/2, \SI{2}{\astronomicalunit})$ et (b) $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$, et une même ligne de visée pour les deux figures : $(\alpha_o, \beta_o) = (\pi/4, \pi/2)$.}
+    \label{fig: tau en fct de L}
+\end{figure}
+
+Les figures (\ref{fig: tau en fct de L}) nous montrent bien cette tendance qu'à la profondeur optique à plafonner à une certaine valeur, en l'occurence pour nos deux choix de direction d'observation et de position de la source, pour un $L > \SI{25}{\astronomicalunit}$ la valeur de $\tau$ ne varie plus, il est donc inutile d'intégrer sur $z$ pour une distance plus grande. De plus, nous pouvons remarquer que la valeur maximale de la profondeur optique varie dans les deux cas. Ceci s'explique par le fait que lorsque la source se trouve "derrière" les deux sources, la géométrie est plus favorable pour l'interaction gamma-gamma alors qu'elle l'est moins pour la naine blanche lorsque la source se trouve "devant" elle. La valeur de $L$ pour laquelle la profondeur optique plafonne et la valeur maximale de la profondeur optique dépendent de la géométrie du système (WD, RG, source gamma et observateur) mais aussi de l'énergie du photon gamma considérée. Les figures qui vont suivre vont nous présenter ces différentes dépendances.
+
+Les figures (\ref{fig: tau r_gamma}) nous présentent le cas où la source gamma se retrouve à différentes distances (2, 8 et \SI{14}{\astronomicalunit}) de la naine blanche mais pour des angles fixes ($\alpha_\gamma = 0$ et $\beta_\gamma = \pi/2$). Puisque la source est "devant" la naine blanche et "derrière" la géante rouge, la configuration est plus favorable pour l'interaction avec les photons issus de la géante rouge que ceux issus de la naine blanche d'où le fait que la profondeur optique due à la naine blanche est plus faible que celle causée par la géante rouge. Plus la source gamma est proche de la naine blanche, plus haut sera le maximum de la profondeur optique, la valeur de la profondeur optique dépend de la distance à la source de photons cibles, la densité de ces derniers diminue fortement avec la distance, mais aussi à l'énergie de ces photons, dépendant de la température de la source.
+
+\begin{figure}
+	\centering
+    \subfloat [$r_\gamma = \SI{2}{\astronomicalunit}$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_L_2ua_pi4_1TeV.eps}}\hfill
+    \subfloat [$r_\gamma = \SI{8}{\astronomicalunit}$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_L_8au.eps}}\hfill
+    \subfloat [$r_\gamma = \SI{14}{\astronomicalunit}$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_L_14au.eps}}\hfill
+    \caption{Variation de la profondeur optique en fonction de la distance parcourue par le photon gamma pour différentes distances de la source gamma à la naine blanche : (a) $r_\gamma = \SI{2}{\astronomicalunit}$, (b) $r_\gamma = \SI{8}{\astronomicalunit}$ et (c) $r_\gamma = \SI{14}{\astronomicalunit}$. Les angles de la source sont $\alpha_\gamma = 0$ et $\beta_\gamma = \pi/2$ et la direction de l'observateur est $(\alpha_o, \beta_o) = (\pi/4, \pi/2)$. Le photon gamma utilisé pour la simulation a une énergie de \SI{1}{\TeV}.}
+    \label{fig: tau r_gamma}
+\end{figure}
+
+Les figures (\ref{fig: tau alpha_o}) représentent la dépendance de la profondeur optique en la direction d'observation pour un choix de coordonnées de la source gamma en $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$ et un angle d'inclinaison d'obervation par rapport au pôle céleste de $\pi/2$. Remarquons que si la direction d'observation est perpendiculaire à l'axe interastre du système binaire dans le plan orbital, la géante rouge ne contribue pas à l'atténuation pour une distance trop élevée de cette dernière. Alors que si la direction est presque dans sa direction par rapport à la naine blanche, elle contribue plus que la naine blanche puisque les conditions géométriques et de densité sont plus favorables.
+
+\begin{figure}
+	\centering
+    \subfloat [$\alpha_o = \pi/4$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_L_2ua_pi4_1TeV.eps}}\hfill
+    \subfloat [$\alpha_o = \pi/2$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_L_pi2.eps}}\hfill
+    \caption{Variation de la profondeur optique en fonction de la distance parcourue par le photon gamma pour différentes directions d'observation : (a) $\alpha_o = \pi/4$ et (b) $\alpha_o = \pi/2$. La source gamma se trouve aux coordonnées $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$ et l'angle de l'observateur par rapport au pôle céleste est $\beta_o = \pi/2$. Le photon gamma utilisé pour la simulation a une énergie de \SI{1}{\TeV}.}
+    \label{fig: tau alpha_o}
+\end{figure}
+
+Les figures (\ref{fig: tau energie}) nous donnent la dépendance de la profondeur en fonction de l'énergie du photon gamma avec une source placée aux coordonnées $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (\pi/4, \pi/2, \SI{2}{\astronomicalunit})$ et une direction d'observation telle que $(\alpha_o, \beta_o) = (\pi/4, \pi/2)$. Nous pouvons remarquer que la profondeur optique dépend fortement de la valeur de l'énergie du photon gamma, si l'énergie est trop faible, l'interaction ne se fait pas et il n'y a pas d'atténuation. Par ailleurs, pour des énergies trop élevées, il n'y a à nouveau aucune atténuation. Par contre, pour une énergie satisfaisant les conditions géométrique et énergétique, la profondeur optique sera non nulle puisqu'il y aura une interaction. Pour $E_\gamma = \SI{1}{\TeV}$, les conditions géométriques induisent que la profondeur optique due à la géante rouge sera plus grande que celle due à la naine blanche. Par contre, pour une énergie de \SI{10}{\TeV}, la condition énergétique prime sur la condition géométrique, cela induit que la profondeur optique due à la naine blanche sera plus élevée que pour la géante rouge.
+
+Le fait d'avoir regarder la dépendance en la longueur d'intégration de la transmittance permet de constater qu'au-delà d'une certaine valeur, la transmittance ne varie plus et il est donc inutile et peu optimal de calculer l'intégrale pour des valeurs élévées de $L$.
+
+\begin{figure}[H]
+	\centering
+    \subfloat [$\alpha_o = \pi/2$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_L_100GeV.eps}}\hfill
+    \subfloat [$\alpha_o = \pi/4$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_L_2ua_pi4_1TeV.eps}}\hfill
+    \subfloat [$\alpha_o = \pi/2$]{\includegraphics[width=0.5\textwidth]{/home/vivi/Documents/IRAP/Stage/Graphe/Correctoptical_depth_L_10TeV.eps}}\hfill
+    \caption{Variation de la profondeur optique en fonction de la distance parcourue par le photon gamma pour différentes énergies de ce dernier : (a) $E_\gamma = \SI{100}{\GeV}$, (b) $E_\gamma = \SI{1}{\TeV}$ et (c) $E_\gamma = \SI{10}{\TeV}$. La source gamma se trouve aux coordonnées $(\alpha_\gamma, \beta_\gamma, r_\gamma) = (0, \pi/2, \SI{2}{\astronomicalunit})$ et la direction de l'observateur est $(\alpha_o, \beta_o) = (\pi/4, \pi/2)$.}
+    \label{fig: tau energie}
+\end{figure}
+
+\subsection{Carte de l'atténuation de photons à une certaine énergie}\label{sec: map}
+
+Par observation, il est supposé que le système binaire de la nova V407 Cygni est vu par la tranche. Cette vision par la tranche implique une symétrie cylindrique autour de l'axe interastre, le choix du plan contenant cet axe pour représenter l'atténuation des photons à une certaine énergie en différentes positions de ce plan n'est pas important. Pour simplifier les calculs nous allons prendre le demi-plan le plus simple, celui contenant le pôle céleste et l'axe $Z$ comme décrit à la figure (\ref{fig: coordonnees systeme binaire}). Les coordonnées de la source gamma dans ce plan sont
+\begin{equation*}
+	\alpha_\gamma =
+    \left\{
+    \begin{array}{l}
+    	0 \text{ si } x \geq 0\\
+        \pi \text{ sinon}
+    \end{array}
+    \right.
+\end{equation*}
+\begin{align*}
+	\beta_\gamma &= \arccos\left(\frac{Z}{r_\gamma} \right)\\
+    r_\gamma &= \sqrt{X^2 + Z^2}
+\end{align*}
+Ce qui permet de réutiliser les fonctions développées pour les cas précédents.
+
+L'atténuation de la source gamma sera d'autant plus grande qu'elle sera proche de la naine blanche et derrière cette dernière dans le cas où l'observateur observe en conjoncture supérieure (la géante rouge se trouve devant la naine blanche) et derrière la géante rouge dans le cas de conjjoncture inférieure (la naine blanche se trouve devant la géante rouge par rapport à l'observateur). Les positions éclipsées seront mises à $0$ en transmittance quelque soit l'énergie des photons gamma et cibles. De plus, comme dans la section \ref{sec: map}, la direction d'observation sera telle qu'il existera une symétrie cylindrique autour de l'axe de visée quelque soit le type de nova considéré ce qui va simplifier nos calculs.
+
+\section{Modélisation du spectre dans le cas dépendant du temps}\label{sec: choc en progression}\label{sec: temps}
+
+Dans les sections précédentes, nous avons considéré que tout le système éait statique, la source gamma se trouvait toujours à la même position et la naine blanche possèdait une photosphère constante de rayon \SI{0.5}{\astronomicalunit} et de température \SI{10000}{\K}. Cependant, cela est en général pas vrai dans la plus part des cas, la photosphère de la naine blanche varie au cours du temps et un choc lors de l'explosion de la nova se propage dans le système binaire. Dans cette section, nous allons nous intéresser à cette évolution temporelle.
+
+\subsection{Spectre d'un choc en progression pour une nova classique statique}
+
+Soit une nova classique, comme nous l'avons vu à la section \ref{sec: nova classique}, la seule contribution à l'atténuation est la naine blanche se trouvant au centre du choc.
+\begin{figure}[H]
+	\centering
+    \begin{tikzpicture}
+    	\draw (0,0) circle (0.20cm);
+        \draw (0,-0.5) node[below]{WD};
+        \draw [red] (0,0) circle (1.75cm);
+        \draw [red, ->] (0,2) -- (0,2.25);
+        \draw [red, ->] (2.0,0) -- (2.25,0);
+        \draw [red, ->] (0,-2.0) -- (0,-2.25);
+        \draw [red, ->] (-2.0,0) -- (-2.25,0);
+        \draw [red, ->] (1.5, 1.5) -- (1.75, 1.75);
+        \draw [red, ->] (-1.5, -1.5) -- (-1.75, -1.75);
+        \draw [red, ->] (-1.5, 1.5) -- (-1.75, 1.75);
+        \draw [red, ->] (1.5, -1.5) -- (1.75, -1.75);
+        \draw [thick] plot[mark=*,mark size=0.25mm](9,0) node[right]{O};
+        \draw [dashed] (0,0) -- (1.5,1.02);
+        \draw [blue, ->] (1,0) arc (0:34:1cm)node [below]{$\theta$};
+        \draw [red!75!green!60!blue] [dashed] (0,0) -- (9,0);
+    \end{tikzpicture}
+    \caption{Représentation de la géométrie du système. En rouge le choc qui se propage de manière isotrope (sphérique) depuis la naine blanche, Pour chaque position $\theta$ il y existe une symétrie cylindrique autour de l'axe de visée (axe entre la naine blanche (WD) et l'observateur en O).}
+    \label{fig: choc}
+\end{figure}
+
+Grâce à la symétrie cylindrique du problème, nous pouvons facilement calculer en chaque surface "élémentaire" $d S$ (cf fig.(\ref{fig: dS})) la luminosité de cette dernière.
+\begin{equation}
+	L_{\gamma,dS_i} = L_\gamma \frac{dS_i}{S}
+    \label{eq: elementary luminosity}
+\end{equation}
+où $L_\gamma$ est la luminosité totale intégrée sur toute la surface du choc, $dS$ est la surface "élémentaire" satisfaisant les conditions de symétrie et $S$ est la surface totale du choc ($4\pi r_\gamma^2$).
+
+\begin{figure}[H]
+	\centering
+    \begin{tikzpicture}
+        \draw [red] (0,0) circle (1.75cm);
+        \draw [-red!75!green!60!blue] (0.5,-1.65) arc (-50:50:2.15cm);
+        \draw [-red!75!green!60!blue] (1, -1.45) arc (-45:45:2.05cm);
+        \draw [-red!75!green!60!blue] (1.25,0) node[above]{$dS$};
+        \draw [thick] plot[mark=*,mark size=0.25mm](9,0) node[right]{O};
+        \draw [red!75!green!60!blue] [dashed] (0,0) -- (9,0);
+    \end{tikzpicture}
+    \caption{Représentation (en vert) de la surface "élémentaire" satisfaisant la condition de symétrie cylindrique autour de l'axe de visée.}
+    \label{fig: dS}
+\end{figure}
+
+En connaissant la surface "élémentaire" $dS$ (cf fig.(\ref{fig: dS}))
+\begin{equation*}
+	dS_i = 2 \pi r_\gamma^2 (\cos\beta_{min} - \cos\beta_{max}),
+\end{equation*}
+avec $\beta_{min} = \beta_\gamma - (\Delta \beta)/2$ et $\beta_{max} = \beta_\gamma + (\Delta \beta)/2$.
+
+Remarquons que la fraction des deux surfaces $dS/S$ est équivalent à la fraction d'angle solide sous-tendu par ces deux surfaces
+\begin{equation*}
+	\frac{dS_i}{S} = \frac{d\Omega_i}{\Omega} = \frac{2\pi(\cos\beta_{min} - \cos\beta_{max}}{4\pi})
+\end{equation*}
+
+Grâce à ces expressions, nous pouvons en exprimer sa luminosité totale non absorbée
+\begin{equation}
+	L_{\gamma} = \sum_i L_{\gamma, dS_i} = \frac{L_\gamma}{\Omega} \sum_i d\Omega_i
+\end{equation}
+    
+Maintenant, considérons l'absorption due à la présence du rayonnement de la naine blanche. La transmittance dépend de la position $(r_\gamma, \beta_\gamma, \alpha_\gamma)$ par rapport à la naine blanche mais par la symétrie cylindrique du problème, le calcul numérique se simplifie sur la surface $dS$ définie ci-dessus\footnote{Grâce à la symétrie cylindrique du problème, le choix de l'angle $\alpha$ n'a pas dimportance et nous pouvons le prendre simplement égal à $0$ ou $\pi$.}. La luminosité transmie est
+\begin{equation}
+	L_{\gamma, trans} = \frac{L_\gamma}{\Omega} \sum_i e^{-\tau_i} d\Omega_i
+\end{equation}
+où $\tau_i$ est la profondeur optique à la position considérée.
+
+Dans le code nous allons d'abord calculer la transmittance en la position choisie, pour la surface "élémentaire" $d S$, en tenant compte de l'éclipse. Puis nous allons chercher la luminosité transmise, après interaction gamma-gamma, de la surface $dS$ par
+\begin{equation*}
+	L_{\gamma, trans, i} = L_{\gamma, dS_i} e^{-\tau_i} 
+\end{equation*}
+
+La figure (\ref{fig: Eth 10000K}) nous permettra de mieux comprendre les différents spectres que nous avons obtenus pour différents rayons, temps écoulé depuis l'explosion de la nova. En effet, remarquons que le minimum d'énergie requise au photon gamma quand il rencontre un photon issu de la naine blanche à \SI{10000}{\K}, l'énergie de ce dernier est de l'ordre de $kT$, pour que l'atténuation gamma-gamma se fasse est pour $\alpha = \pi$ comme dit à la section \ref{sec: Eth} et est aux alentours de \SI{200}{\GeV}. Cela explique le fait qu'à partir de cette énergie, une partie des photons gamma sont absorbés et le spectre est plus faible que dans le cas non absorbé. Par contre, au-delà d'une certaine énergie, il n'y a pas non plus d'absorption et cela est dû à la dépendance en l'énergie de la section efficace.
+
+\begin{figure}[H]
+	\centering
+    \includegraphics[scale=0.8]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectE_th_10000K.eps}
+    \caption{Énergie seuil du photon gamma en fonction de l'angle d'interaction $\alpha$ pour des photons cibles d'énergie de $kT$ avec une température T de la source de photons cibles de \SI{10000}{\K}.}
+    \label{fig: Eth 10000K}
+\end{figure}
+
+La figure (\ref{fig: gamma 20d}) ci-dessous nous montre le résultat du calcul du spectre d'émission gamma en tenant compte de l'absorption due à la naine blanche et à l'éclipse due à son compagnon dont le rayon est généralement plus grand, qui a une influence plus importante sur l'éclipse que la naine blanche. Nous pouvons remarquer malgré les erreurs numériques qui atténuent le spectre, le début de la décroissance à cause de l'interaction gamma-gamma débute aux alentours de \SI{100}{\GeV} comme cela était prédit à la figure (\ref{fig: Eth 10000K}).
+
+\begin{figure}[H]
+	\centering
+    \includegraphics[scale=0.8]{/home/vivi/Documents/IRAP/Stage/Graphe/CorrectGamma_emission_20d.eps}
+    \caption{Spectre d'émission gamma du choc provoqué par l'explosion de la nova sans absorption et en tenant compte de l'atténuation causée par l'intéraction de photons gamma avec les photons de la naine blanche à \SI{10000}{\K} \SI{20}{\day} après l'explosion.}
+    \label{fig: gamma 20d}
+\end{figure}
+
+\textbf{Remarque :} Malheureusement, les problèmes d'optimisation du code n'ont pas permis de pouvoir faire une moyenne temporelle sur le spectre d'émission et d'absorption ni de pouvoir faire plusieurs simulations pour différents pas de temps. Par contre, l'influence du pas sur $\beta_\gamma$ est primordial car s'il est trop grand, le spectre calculé par la subdivision de la surface du choc sera atténué numériquement et s'il est trop petit, le temps de calcul sera trop élévé. Il faut trouver un compromis.
+\newpage
+
+\addcontentsline{toc}{section}{Annexes}
+\begin{appendices}
+\tocless\section{Code pour la transmittance d'une source gamma quelconque}
+
+Le code se compose de plusieurs fonctions dont une principale et des dépendances.
+
+\paragraph*{Fonction principale} \hspace{0pt} \\
+
+La fonction principale pour calculer la profondeur optique est la fonction \texttt{calculate\_tau}. Cette fonction prend plusieurs variables et renvoit la profondeur optique pour chaque valeur d'énergie du photon gamma. Comme dans l'équation (\ref{eq: tau}), le calcul de $\tau$ nécessite le calcul de quatre intégrales qui vont être fait grâce à des boucles sur la grille de la variable d'intégration et à la fonction \texttt{integration\_log}.
+
+Les variables à fournir à cette fonction sont:
+\begin{itemize}
+	\item la grille d'énergie du photon gamma en \si{\erg} (notée \textit{E})
+    \item la grille de la position $z$ le long de la ligne de visée pour la dernière intégrale sur $z$ en \si{\cm} (notée \textit{z})
+    \item la grille de l'angle $\varphi$ qui va de $0$ à $2\pi$ quelque soit la source pour l'intégrale sur $\varphi$ en \si{\rad} (noté \textit{phi})
+    \item le paramètre d'impact en \si{\cm} (noté \textit{b})
+    \item le rayon de la source, ce rayon peut être donné en \si{\astronomicalunit} et il sera converti en \si{\cm} dans le code par le facteur \textcolor{blue}{AU2cm} du fichier Python \texttt{Conversion\_factors.py} (noté \textit{R})
+    \item la température de la source en \si{\K} (noté \textit{T})
+    \item la position sur la ligne de visée la plus proche de la source en \si{\cm} (notée \textit{z\_b})
+\end{itemize}
+
+Remarquons que certaines variables à fournir sont à calculer antérieurement comme le paramètre d'impact et la position $z_b$. Ces variables sont calculées par les fonctions \texttt{compute\_WD} et \texttt{compute\_RG} selon la source concernée.
+
+\paragraph*{Fonction integration\_log} \hspace{0pt} \\
+
+Cette fonction a pour but de calculer l'intégrale d'une fonction qui a une variation du type log-log.
+
+Soit la variable $y$ telle que $y = a x^b$, si nous prenons le logarithme des deux membres de l'égalité nous avons $\log y = \log a + b \log x$, une fonction linéaire suivant une échelle log-log. Prendre l'intégrale de cette fonction revient donc à faire la méthode des trapèzes sur de petits intervalles dans les bornes d'intégration sur $x$. Remarquons que si le choix du pas sur $x$ est suffisamment bien choisi, toutes les fonctions peuvent être approchées assez bien par une droite et la méthode d'intégration est robuste quelque soit la fonction qui relie $y$ et $x$.
+
+Les variables à fournir sont :
+\begin{itemize}
+	\item le vecteur $x$ pour l'intégration sur $x$
+    \item le vecteur $y$ qu'il faut intégrer sur $x$
+\end{itemize}
+
+\paragraph*{Fonction compute\_WD et compute\_RG} \hspace{0pt} \\
+
+Ces fonctions ont pour but de retourner le paramètre d'impact, la position le long de la ligne de visée la plus proche de la source et la condition d'éclipse pour la source concernée (naine blanche ou son compagnon).
+
+\textbf{Cas de la naine blanche}
+
+Dans le choix du système de coordonnées pour décrire notre système et la ligne de visée, la naine blanche se trouve à l'origine du repère et les coordonnées de la source gamma sont données vis-à-vis de la naine blanche. La fonction utilisée sera \texttt{compute\_WD}.
+
+Les paramètres à fournir sont :
+\begin{itemize}
+	\item l'angle azimutal de la source gamma par rapport au pôle céleste, $\psi_\gamma$ en \si{\rad} (noté \textit{psi\_gamma})
+    \item l'angle azimutal de la ligne de visée pqr rapport au pôle céleste, $\psi_o$ en \si{\rad} (noté \textit{psi\_o})
+    \item l'angle polaire de la source gamma par rapport à la direction naine blanche-compagnon, $\phi_\gamma$ en \si{\rad} (noté \textit{phi\_gamma})
+    \item l'angle polaire de la ligne de visée par rapport à la direction naine blanche-compagnon, $\phi_o$ en \si{\rad} (noté \textit{phi\_o})
+    \item la distance depuis la naine blanche à la source gamma, $r_\gamma$, il peut être fourni dans le code en \si{\astronomicalunit} car il sera converti en \si{\cm} grâce au facteur \textcolor{blue}{AU2cm} (noté \textit{r\_gamma})
+    \item l'angle $\theta$ maximal soutendu par la naine blanche depuis la source gamma en \si{\rad} (noté \textit{theta\_max\_WD})
+\end{itemize}
+
+L'angle \textit{theta\_max\_WD} sert à vérifier la condition d'éclipse, en effet, si la ligne de visée est telle que l'angle qu'elle forme avec la droite reliant la source gamma et le centre de la naine est plus petit ou égal à cet angle, la source gamma se trouve derrière la naine blanche et elle est donc occultée. Les calculs pour le paramètre d'impact et $z_b$ sont fournis à la section \ref{sec: cadre général}.
+
+\textbf{Cas du compagnon}
+
+Dans le choix du système de coordonnées pour décrire notre système et la ligne de visée, le compagnon se trouve au point $(d_orb, 0, 0)$ où $d_orb$ est la distance orbitale entre la naine blanche et son compagnon, et les coordonnées de la source gamma sont données vis-à-vis de la naine blanche. La fonction utilisée sera \texttt{compute\_RG}.
+
+Les paramètres à fournir sont :
+\begin{itemize}
+	\item l'angle azimutal de la source gamma par rapport au pôle céleste, $\psi_\gamma$ en \si{\rad} (noté \textit{psi\_gamma})
+    \item l'angle azimutal de la ligne de visée pqr rapport au pôle céleste, $\psi_o$ en \si{\rad} (noté \textit{psi\_o})
+    \item l'angle polaire de la source gamma par rapport à la direction naine blanche-compagnon, $\phi_\gamma$ en \si{\rad} (noté \textit{phi\_gamma})
+    \item l'angle polaire de la ligne de visée par rapport à la direction naine blanche-compagnon, $\phi_o$ en \si{\rad} (noté \textit{phi\_o})
+    \item la distance depuis la naine blanche à la source gamma, $r_\gamma$, elle peut être fournie dans le code en \si{\astronomicalunit} car elle sera convertie en \si{\cm} grâce au facteur \textcolor{blue}{AU2cm} (notée \textit{r\_gamma})
+    \item la distance orbitale, $d_{orb}$, elle peut être fournie dans le code en \si{\astronomicalunit} car elle sera convertie en \si{\cm} grâce au facteur \textcolor{blue}{AU2cm} (notée \textit{d\_orb})
+    \item l'angle $\theta$ maximal soutendu par le compagnon depuis la source gamma en \si{\rad} (noté \textit{theta\_max\_RG})
+\end{itemize}
+
+L'angle \textit{theta\_max\_RG} a la même fonction que l'angle \textit{theta\_max\_WD}. Les calculs pour le paramètre d'impact et $z_b$ sont fournis à la section \ref{sec: cadre général}.
+
+\paragraph*{Fonction à intégrer} \hspace{0pt} \\
+
+La fonction à intégrer donnée dans l'expression intégrale de $\tau$ (cf eq.(\ref{eq: tau}) se calcule par la fonction \texttt{f} qui a des dépendances telles que la fonction de calcul de la densité différentielle de photons cibles, la fonction de calcul de la section efficace, \texttt{cross\_section}, et la fonction du calcul de l'angle $\alpha$ entre les deux moments des deux photons, \texttt{angle\_alpha}.
+
+Les paramètres à fournir pour \texttt{f} sont/
+\begin{itemize}
+	\item l'angle $\theta$, angle entre la direction du centre depuis une position et celle du rayon qui provient de la source, en \si{\rad} (noté \textit{theta})
+    \item l'angle $phi$, angle autour de la direction du centre depuis une position, en \si{\rad} (noté \textit{phi})
+    \item l'énergie du photon cible, $\epsilon$ dont sa valeur dépend de l'énergie du photon gamma considérée, en \si{\erg} (noté \textit{eps})
+    \item la position le long de la ligne de visée, $z$, en \si{\cm} (notée \textit{z})
+    \item la distance à la source pour chaque position $z$, $D$, en \si{\cm} (notée \textit{D}) qui est calculée pqr la fonction \texttt{distance} (notée \textit{D})
+    \item le paramètre d'impact, $b$, en \si{\cm} (noté \textit{b})
+    \item l'énergie du photon gamma, $E$, elle peut être fournie dans le code en \si{\MeV} et elle sera convertie en \si{\erg} par le facteur \textcolor{blue}{MeV2erg} (notée \textit{E})
+    \item la température de la source, $T$, en \si{\K} (notée \textit{T})
+    \item la position le long de la ligne de visée la plus proche de la source, $z_b$, en \si{\cm} (notée \textit{z\_b})
+\end{itemize}
+
+\tocless\section{Fonction supplémentaire pour le cas du choc en progression}
+
+Pour la simulation du choc en progression et le calcul du spectre absorbé, il est nécessaire d'ajouter une fonction au fonctions précédentes. Cette fonction est \texttt{elementary\_luminosity} et elle renvoit la luminosité qu'une surface $dS$ telle que dans la section \ref{sec: temps} émet. Le calcul de la luminosité émise par cette surface est donné par l'équation \ref{eq: elementary luminosity}.
+
+Les paramètres à fournir sont :
+\begin{itemize}
+	\item l'angle $\beta_\gamma$ azimutal de la source gamma par rapport au pôle céleste en \si{rad} (noté \textit{beta\_gamma})
+    \item le pas en $\beta_\gamma$ pour la subdivision du choc en \si{\rad} (noté \textit{delta\_beta})
+    \item la distance à la surface du choc (spérique) depuis la naine blanche en \si{\cm} grâce au facteur \textcolor{blue}{AU2cm} (noté \textit{r\_gamma})
+    \item la luminosité totale du choc en un instant $t$ en \si{\erg/\s/\eV} (notée \textit{L\_gamma}
+\end{itemize}
+
+\tocless\section{Fonction pour la dépendance en la longueur d'intégration de la profondeur optique}
+
+Pour connaître la dépendance en la longueur d'intégration sur $z$ de la profondeur optique, nous introduisons une nouvelle fonction \texttt{calculate\_tau\_L} qui ressemble à \texttt{calculate\_tau} sauf pour quelques paramètres.
+
+L'énergie du photon gamma, $E$, est unique et prise de telle manière qu'il y a atténuation contrairement à la fonction précédente où c'était une grille d'énergie qui était donnée. Autre différence, lors de l'utilisation de la fonction \texttt{calculate\_tau\_L}, la longueur d'intégration $L$ va varier et donc l'intégration se fera sur plusieurs intervalles de même longueur qui s'ajouteront bout à bout, le pas sur $z$ restera inchangé.
+
+\end{appendices}
+
+\end{document}

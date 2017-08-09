@@ -29,7 +29,7 @@ if __name__ == '__main__':
     D_star =  np.sqrt(b**2 + (L - zb)**2)       # distance to the star (from us) (cm)
     D_gamma = np.sqrt(b**2 + zb**2)             # distance between the star and the gamma-source (cm)
     R = 0.5 * AU2cm                             # radius of the star (express in Rsun)
-    T = 3000                                    # temperature of the star (K)
+    T = 10000                                    # temperature of the star (K)
     z = np.linspace(0, L, 100)                  # position along the line of sight (cm)
     phi = np.linspace(0, 2*np.pi, 10)           # polar angle (rad)
 
@@ -59,5 +59,5 @@ if __name__ == '__main__':
     #plt.title(u'Optical depth for the interaction between 'r'$\gamma$' '-rays at %.2f GeV \n and photons of a star at %.2f K and a radius %.2f au' %(E_gev, T, R_au))
     plt.text(0.65, 0.5, u'L = %.2f au, T = %.2f K \nb = %.2f au, E$_\gamma$ = %.2f TeV' %(L_au, T, b_au, E_tev), horizontalalignment='left',
      verticalalignment='center', transform = ax.transAxes)
-    plt.legend(loc='best')
+    plt.legend(loc='lower right')
     plt.show()

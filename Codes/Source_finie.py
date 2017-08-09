@@ -19,24 +19,25 @@ from Conversion_factors import *
 from Functions import *
 
 # For the vector E
-number_bin_E = 10
+number_bin_E = 40
 
 # Parameters for the code
 L = 20 * AU2cm                          # the distance to the gamma-source (cm)
 zb = 10 * AU2cm                         # position along the line of sight nearly the star (cm)
 b = 5 * AU2cm                           # impact parameter (cm)
 D_star =  np.sqrt(b**2 + (L - zb)**2)   # distance to the star (from us) (cm)
-D_gamma = np.sqrt(b**2 + L**2)          # distance between the star and the gamma-source (cm)
-R = 100 * Rsun2cm                       # radius of the star (Rsun)
+R = 100 * Rsun2cm                       # radius of the star (cm)
 T = 10000                               # temperature of the star (K)
-z = np.linspace(0, L, 100)              # position along the line of sight (cm)
-phi = np.linspace(0, 2*np.pi, 10)       # angle polar
+step_z = 0.5 * AU2cm                    # step for z (cm)
+z = np.linspace(0, L, int(L/step_z))    # position along the line of sight (cm)
+step_phi = 0.5                                          # step for phi (rad)
+phi = np.linspace(0, 2*np.pi, int(2*np.pi/step_phi))    # angle polar of the one source (rad)
 
 # Energy of the gamma-photon
-Emin = 1e-2*TeV2keV                     # Emin = 1e-2 TeV (keV)
-Emax = 1e5*TeV2keV                      # Emax = 1e5 TeV (keV)
-E = np.logspace(log10(Emin), log10(Emax), number_bin_E)     # keV
-E_tev = E/TeV2keV                                           # TeV
+Emin = 1e-2*TeV2erg                     # Emin = 1e-2 TeV (erg)
+Emax = 1e5*TeV2erg                      # Emax = 1e5 TeV (erg)
+E = np.logspace(log10(Emin), log10(Emax), number_bin_E)     # erg
+E_tev = E/TeV2erg                                           # TeV
 
 # Calculation of the transmittance
 tau = calculate_tau(E, z, phi, b, R, T, zb)

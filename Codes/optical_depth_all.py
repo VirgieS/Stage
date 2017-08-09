@@ -460,7 +460,7 @@ if __name__ == '__main__':
     plt.xlabel(r'z (au)')
     plt.ylabel(r'$\frac{d \tau_{\gamma \gamma}}{d z}$' ' ' r'$(cm^{-1})$' )
     #plt.title(u'Optical depth for the interaction between 'r'$\gamma$' '-rays at %.2f GeV \n and photons of a star at %.2f K and a radius %.2f au' %(E_gev, T, R_au))
-    plt.text(0.65, 0.5, u'D$_{star}$ = %.2f au, L = %.2f au \nz$_b$ = %.2f au, b = %.2f au \n E$_\gamma$=%.2f TeV' %(D_star_au, L_au, zb_au, b_au, E_tev), horizontalalignment='left',
+    plt.text(0.65, 0.5, u'D$_{star}$ = %.2f au, L = %.2f au \nz$_b$ = %.2f au, b = %.2f au \nE$_\gamma$=%.2f TeV' %(D_star_au, L_au, zb_au, b_au, E_tev), horizontalalignment='left',
      verticalalignment='center', transform = ax.transAxes)
 
     plt.legend(loc='best')

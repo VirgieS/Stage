@@ -86,7 +86,7 @@ def angle_alpha(b, D, z, zb, theta, phi):
 
     return  - np.sin(beta) * np.sin(theta) * np.sin(phi) - np.cos(beta) * np.cos(theta)
 
-def f(theta, phi, eps, z, L, b, R, E, T, zb):
+def f(theta, phi, eps, z, b, R, E, T, zb):
 
     """
     Return the function for the integration in phi : f = dn * sigma * (1 - cos(alpha)) * sin(theta)
@@ -98,8 +98,6 @@ def f(theta, phi, eps, z, L, b, R, E, T, zb):
         phi     : angle around the direction between the centre of the star and the position along the line of sight (rad)
         eps     : energy of the target-photon (keV)
         z       : position along the line of sight (cm)
-        L       : the distance to the gamma-source (cm)
-        D_star  : distance to the star (cm)
         b       : impact parameter (cm)
         E       : energy of the gamma-photon (keV)
         T       : temperature of the star (K)
@@ -171,7 +169,7 @@ def calculate_tau(E, z, phi, zb, b, R, T):
 
             for m in range (len(theta)): # integration over phi
 
-                integrand = f(theta[m], phi, eps[l], z[j], L, b, R, E, T, zb)
+                integrand = f(theta[m], phi, eps[l], z[j], b, R, E, T, zb)
                 integrand = np.nan_to_num(integrand)
 
                 integral_phi[m] = integration_log(phi, integrand)

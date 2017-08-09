@@ -11,6 +11,8 @@ Parameters that we can give for this code are:
     T      : temperature of the star (K)
 """
 
+#PROBLEME
+
 # Librairies
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,10 +34,10 @@ z = np.linspace(0, L, 100)              # position along the line of sight (cm)
 phi = np.linspace(0, 2*np.pi, 10)       # angle polar
 
 # Energy of the gamma-photon
-Emin = 1e-2*TeV2keV                     # Emin = 1e-2 TeV (keV)
-Emax = 1e5*TeV2keV                      # Emax = 1e5 TeV (keV)
-E = np.logspace(log10(Emin), log10(Emax), number_bin_E)     # keV
-E_tev = E/TeV2keV                                           # TeV
+Emin = 1e-2*TeV2erg                     # Emin = 1e-2 TeV (erg)
+Emax = 1e5*TeV2erg                      # Emax = 1e5 TeV (erg)
+E = np.logspace(log10(Emin), log10(Emax), number_bin_E)     # erg
+E_tev = E/TeV2erg                                           # TeV
 
 f = plt.figure()
 ax = f.add_subplot(111)
@@ -53,7 +55,6 @@ L_au = L/AU2cm                                          # au
 R_Rsun = R/Rsun2cm                                      # Rsun
 
 plt.xscale('log')
-plt.yscale('log')
 plt.xlabel(r'$E_\gamma$' '(TeV)')
 plt.ylabel(r'$\exp(-\tau_{\gamma \gamma})$')
 plt.title(u'Transmittance of VHE 'r'$\gamma$' '-rays in interaction \n with a star at '+str(round(T,2))+' K and a radius '+str(round(R_Rsun,2))+' 'r'$R_\bigodot$')
